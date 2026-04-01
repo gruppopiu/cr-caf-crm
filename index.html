@@ -935,7 +935,70 @@ tbody tr:hover{background:var(--bg3)}
 .settings-row-label{font-size:13px;font-weight:500;color:var(--text)}
 .settings-row-sub{font-size:11px;color:var(--text3);margin-top:2px}
 
-
+/* ===========================
+   LOGIN SCREEN
+=========================== */
+.login-card{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:40px;
+  width:100%;
+  max-width:400px;
+  box-shadow:var(--shadow2);
+}
+.login-logo{
+  text-align:center;
+  margin-bottom:32px;
+}
+.login-logo .app-icon{
+  width:52px;height:52px;
+  background:var(--accent);
+  border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 12px;
+}
+.login-logo .app-icon .material-symbols-outlined{font-size:28px;color:#fff}
+.login-logo h1{
+  font-family:'Manrope',sans-serif;
+  font-weight:800;
+  font-size:22px;
+  color:var(--text);
+}
+.login-logo p{font-size:13px;color:var(--text3);margin-top:4px}
+.login-form{display:flex;flex-direction:column;gap:14px}
+.login-form label{
+  font-size:11px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--text3);
+  display:block;
+  margin-bottom:4px;
+}
+.login-form input{
+  width:100%;
+  padding:10px 14px;
+  border:1.5px solid var(--border2);
+  border-radius:var(--r);
+  background:var(--bg);
+  color:var(--text);
+  outline:none;
+  font-size:14px;
+  transition:border-color .15s;
+}
+.login-form input:focus{border-color:var(--accent)}
+.login-form .btn-p{width:100%;justify-content:center;padding:11px}
+.login-err{
+  background:var(--red-bg);
+  color:var(--red);
+  font-size:12px;
+  font-weight:500;
+  padding:8px 12px;
+  border-radius:var(--r);
+  display:none;
+}
+.login-err.visible{display:block}
 
 /* ===========================
    MISSING TAGS / TAGS
