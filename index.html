@@ -1173,22 +1173,30 @@ async function doSignup() {
   if(pwd.length<8){err.textContent='La password deve essere di almeno 8 caratteri.';err.classList.add('show');return;}
   if(pwd!==pwd2){err.textContent='Le password non coincidono.';err.classList.add('show');return;}
   btn.disabled=true;btn.innerHTML='<div class="spin"></div>';
-  const {data,error} = await sb.auth.signUp({email,password:pwd,options:{data:{nome}}});
+
+  // 1. Crea utente Auth
+  const {data,error} = await sb.auth.signUp({email,password:pwd});
   btn.disabled=false;
   btn.innerHTML='<span class="material-symbols-outlined">person_add</span>Crea account';
   if(error){err.textContent=error.message;err.classList.add('show');return;}
-  // Con "Confirm email" OFF su Supabase, la sessione e' gia' attiva subito dopo il signup
-  if(data?.session) {
+
+  if(data?.session && data?.user) {
     currentUser=data.user;
-    // Piccola attesa per dare tempo al trigger DB di creare il profilo
-    await new Promise(r=>setTimeout(r,700));
+    // 2. Inserisce il profilo direttamente (non dipende dal trigger)
+    //    upsert con onConflict ignora silenziosamente se il trigger lo ha già creato
+    await sb.from('profili').upsert(
+      {id:data.user.id, nome, ruolo:'operatore'},
+      {onConflict:'id', ignoreDuplicates:false}
+    );
     await loadProfile();
+    updateSidebar();
     showApp();
     await loadAll();
     return;
   }
-  // Fallback: sessione non immediata (non dovrebbe accadere con Confirm email OFF)
-  err.textContent='Account creato ma sessione non avviata. Prova ad accedere con le credenziali appena inserite.';
+
+  // Fallback per email non confermata (non dovrebbe accadere con Confirm email OFF)
+  err.textContent='Account creato. Controlla la email oppure riprova ad accedere.';
   err.classList.add('show');
 }
 
@@ -1559,7 +1567,7 @@ function rElenco() {
       <td class="td-actions" onclick="event.stopPropagation()">
         <button class="btn-icon" title="Apri scheda" onclick="openScheda('${cr.id}')"><span class="material-symbols-outlined">visibility</span></button>
         <button class="btn-icon" title="Modifica" onclick="openModificaCR('${cr.id}')"><span class="material-symbols-outlined">edit</span></button>
-        ${userProfile?.ruolo==='admin'?`<button class="btn-icon" title="Elimina" style="color:var(--red)" onclick="openElimina('${cr.id}')"><span class="material-symbols-outlined">delete</span></button>`:''}
+        <button class="btn-icon" title="Elimina" style="color:var(--red)" onclick="openElimina('${cr.id}')"><span class="material-symbols-outlined">delete</span></button>
       </td>
     </tr>`;
   }).join('');
@@ -1583,7 +1591,7 @@ function rElenco() {
             ${[annoAttivo+1,annoAttivo,annoAttivo-1,annoAttivo-2].map(y=>`<option value="${y}" ${y===annoAttivo?'selected':''}>${y}</option>`).join('')}
           </select>
           <button class="btn-ghost" onclick="esportaCSV()"><span class="material-symbols-outlined">download</span>CSV</button>
-          ${userProfile?.ruolo==='admin'?`<button class="btn-ghost btn-danger" onclick="bulkDeleteSelected()" ${selectedCrs.size===0?'disabled style="opacity:.45;cursor:not-allowed"':''}><span class="material-symbols-outlined">delete</span>Elimina selezionati</button>`:''}
+          <button class="btn-ghost btn-danger" onclick="bulkDeleteSelected()" ${selectedCrs.size===0?'disabled style="opacity:.45;cursor:not-allowed"':''}><span class="material-symbols-outlined">delete</span>Elimina selezionati</button>
         </div>
         <div class="filter-panel">
           <div class="filter-row">
@@ -1610,7 +1618,7 @@ function rElenco() {
       <div class="bulk-bar ${selectedCrs.size>0?'show':''}" id="bulk-bar">
         <span class="bulk-n">${selectedCrs.size} selezionati</span>
         <button class="btn-ghost" style="font-size:12px" onclick="bulkAdem()"><span class="material-symbols-outlined">task_alt</span>Imposta adempimento</button>
-        ${userProfile?.ruolo==='admin'?`<button class="btn-ghost btn-danger" style="font-size:12px" onclick="bulkDeleteSelected()"><span class="material-symbols-outlined">delete</span>Elimina selezionati</button>`:''}
+        <button class="btn-ghost btn-danger" style="font-size:12px" onclick="bulkDeleteSelected()"><span class="material-symbols-outlined">delete</span>Elimina selezionati</button>
         <button class="btn-ghost" style="font-size:12px" onclick="deselAll()">Deseleziona</button>
       </div>
       ${lista.length===0?`<div class="empty"><span class="material-symbols-outlined">search_off</span><p>Nessun CR trovato con i filtri attivi.</p></div>`:`
@@ -1641,7 +1649,7 @@ function toggleFiltroAdemp(key, checked){
 }
 function clearAdempFilters(){ filtroAdempMancanti = []; filtroAdempMode='all'; rElenco(); }
 function bulkDeleteSelected(){
-  if(userProfile?.ruolo!=='admin'||!selectedCrs.size)return;
+  if(!selectedCrs.size)return;
   const ids=Array.from(selectedCrs);
   const crs=ids.map(id=>DB_CR.find(c=>c.id===id)).filter(Boolean);
   document.getElementById('bulk-el-count').textContent=`${ids.length} CR`;
@@ -1654,7 +1662,7 @@ function bulkDeleteSelected(){
   openOv('ov-elimina-bulk');
 }
 async function confermaBulkDelete(){
-  if(userProfile?.ruolo!=='admin'||!selectedCrs.size)return;
+  if(!selectedCrs.size)return;
   const btn=document.getElementById('btn-conferma-elimina-bulk');
   if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner-sm"></span>Eliminazione...';}
   const ids=Array.from(selectedCrs);
@@ -1726,9 +1734,9 @@ async function openScheda(crId) {
       </div>
       <div class="scheda-acts">
         <button class="scheda-btn" onclick="openModificaCR('${crId}')"><span class="material-symbols-outlined">edit</span>Modifica</button>
-        ${cr.stato==='attivo'&&userProfile?.ruolo==='admin'?`<button class="scheda-btn scheda-btn-danger" onclick="openRevoca('${crId}')"><span class="material-symbols-outlined">cancel</span>Revoca</button>`:''}
-        ${cr.stato==='revocato'&&userProfile?.ruolo==='admin'?`<button class="scheda-btn" onclick="ripristina('${crId}')"><span class="material-symbols-outlined">restore</span>Ripristina</button>`:''}
-        ${userProfile?.ruolo==='admin'?`<button class="scheda-btn scheda-btn-danger" onclick="openElimina('${crId}')"><span class="material-symbols-outlined">delete</span>Elimina</button>`:''}
+        ${cr.stato==='attivo'?`<button class="scheda-btn scheda-btn-danger" onclick="openRevoca('${crId}')"><span class="material-symbols-outlined">cancel</span>Revoca</button>`:''}
+        ${cr.stato==='revocato'?`<button class="scheda-btn" onclick="ripristina('${crId}')"><span class="material-symbols-outlined">restore</span>Ripristina</button>`:''}
+        <button class="scheda-btn scheda-btn-danger" onclick="openElimina('${crId}')"><span class="material-symbols-outlined">delete</span>Elimina</button>
       </div>
     </div>
 
