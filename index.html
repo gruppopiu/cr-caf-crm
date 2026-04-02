@@ -17,16 +17,20 @@
   --text:#111827;
   --text2:#6b7280;
   --text3:#9ca3af;
-  --blue:#3b82f6;
+  --blue:#2563eb;
+  --blue-strong:#1d4ed8;
   --blue-bg:rgba(59,130,246,.09);
   --blue-border:rgba(59,130,246,.2);
-  --green:#16a34a;
+  --green:#22c55e;
+  --green-strong:#16a34a;
   --green-bg:rgba(22,163,74,.09);
   --green-border:rgba(22,163,74,.2);
-  --orange:#d97706;
+  --orange:#f59e0b;
+  --orange-strong:#d97706;
   --orange-bg:rgba(217,119,6,.09);
   --orange-border:rgba(217,119,6,.2);
-  --red:#dc2626;
+  --red:#ef4444;
+  --red-strong:#dc2626;
   --red-bg:rgba(220,38,38,.09);
   --red-border:rgba(220,38,38,.2);
   --sidebar:#1c2333;
@@ -703,6 +707,36 @@ tbody tr:hover{background:var(--surface2)}
 .spin{display:inline-block;width:15px;height:15px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:rot .6s linear infinite;vertical-align:middle}
 @keyframes rot{to{transform:rotate(360deg)}}
 
+
+/* ── DASHBOARD EXT ───────── */
+.dash-priority-grid{display:grid;grid-template-columns:1.45fr .95fr;gap:14px;margin-bottom:18px}
+.dash-secondary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.priority-card{border:1px solid var(--blue-border);box-shadow:var(--sh)}
+.priority-card .card-head{background:linear-gradient(135deg,rgba(37,99,235,.12),rgba(37,99,235,.03))}
+.priority-top-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.priority-empty{padding:32px 18px}
+.chart-box-compact{height:280px}
+.chart-box-small{height:240px}
+.chart-box-compact canvas,.chart-box-small canvas{width:100% !important;height:100% !important}
+.inline-select{padding:6px 10px;border:1px solid var(--border2);border-radius:8px;background:var(--surface);color:var(--text);font-size:12px;font-weight:600;outline:none}
+.stat-list{display:flex;flex-direction:column;gap:10px}
+.stat-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2)}
+.stat-left{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:600;color:var(--text2)}
+.stat-dot{width:10px;height:10px;border-radius:50%}
+.priority-table td{padding-top:15px;padding-bottom:15px}
+.priority-table .td-name{font-size:14px}
+.table-note{font-size:11px;color:var(--text3)}
+.filter-panel{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-width:100%;margin-top:4px}
+.filter-title{font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+.filter-chips{display:flex;flex-wrap:wrap;gap:8px}
+.filter-chip{display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid var(--border2);border-radius:999px;background:var(--surface);font-size:12px;font-weight:600;color:var(--text2);cursor:pointer}
+.filter-chip input{accent-color:var(--blue);cursor:pointer}
+.profile-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.profile-help{font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6}
+@media(max-width:1100px){
+  .dash-priority-grid,.dash-secondary-grid{grid-template-columns:1fr}
+}
+
 /* ── MOBILE ──────────── */
 .mob-menu{display:none;align-items:center;padding:5px;border-radius:8px;color:var(--text2)}
 .mob-ov{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99;display:none}
@@ -714,7 +748,8 @@ tbody tr:hover{background:var(--surface2)}
   .mob-menu{display:flex}
   .kpi-grid{grid-template-columns:1fr 1fr}
   .insight-row{grid-template-columns:1fr}
-  .form-grid{grid-template-columns:1fr}
+  .form-grid,.profile-card-grid{grid-template-columns:1fr}
+  .dash-priority-grid,.dash-secondary-grid{grid-template-columns:1fr}
   .page-content{padding:14px}
 }
 </style>
@@ -991,7 +1026,9 @@ let scad = { mese:4, giorno:30 };
 let editingCrId = null, revocaCrId = null, eliminaCrId = null;
 let filtroStato = 'tutti', filtroSearch = '';
 let selectedCrs = new Set();
-let chartDash = null;
+let filtroAdempMancanti = [];
+let dashVizMode = 'doughnut';
+let dashCharts = [];
 
 /* ════════════════════════════════════════
    INIT
@@ -1014,11 +1051,12 @@ function applyTheme() {
   const sw = document.getElementById('sw-theme');
   if(sw) sw.classList.toggle('on', theme==='dark');
 }
+function destroyDashCharts(){ dashCharts.forEach(c=>{ try{ c.destroy(); }catch(e){} }); dashCharts=[]; }
 function toggleTheme() {
   theme = theme==='dark'?'light':'dark';
   localStorage.setItem('theme',theme);
   applyTheme();
-  if(chartDash){chartDash.destroy();chartDash=null;}
+  destroyDashCharts();
   renderPage();
 }
 
@@ -1033,9 +1071,20 @@ function showApp() {
   if(userProfile) {
     const ini = (userProfile.nome||currentUser.email||'U').charAt(0).toUpperCase();
     document.getElementById('sb-av').textContent = ini;
-    document.getElementById('sb-uname').textContent = userProfile.nome||currentUser.email;
+    document.getElementById('sb-uname').textContent = getProfileDisplayName();
     document.getElementById('sb-urole').textContent = userProfile.ruolo==='admin'?'Amministratore':'Operatore';
   }
+}
+
+function getProfileNameParts() {
+  const full = (userProfile?.nome || '').trim();
+  if(!full) return { nome:'', cognome:'' };
+  const parts = full.split(/\s+/);
+  return { nome: parts.shift() || '', cognome: parts.join(' ') };
+}
+function getProfileDisplayName() {
+  const full = (userProfile?.nome || '').trim();
+  return full || currentUser?.email || 'Utente';
 }
 
 /* ════════════════════════════════════════
@@ -1057,15 +1106,19 @@ async function doLogin() {
   const err=document.getElementById('l-err');
   const btn=document.getElementById('l-btn');
   err.classList.remove('show');
+  err.textContent='Credenziali non valide. Riprova.';
   btn.disabled=true; btn.innerHTML='<div class="spin"></div>';
   const {error} = await sb.auth.signInWithPassword({email,password:pwd});
   btn.disabled=false;
   btn.innerHTML='<span class="material-symbols-outlined">login</span>Accedi alla piattaforma';
-  if(error){err.classList.add('show');return;}
+  if(error){ err.textContent = error.message || 'Credenziali non valide.'; err.classList.add('show'); return; }
   const {data:{session}} = await sb.auth.getSession();
   currentUser=session.user;
-  await loadProfile(); showApp(); await loadAll();
+  await loadProfile();
+  showApp();
+  await loadAll();
 }
+
 
 async function doSignup() {
   const nome=document.getElementById('s-nome').value.trim();
@@ -1080,12 +1133,13 @@ async function doSignup() {
   if(pwd.length<8){err.textContent='La password deve essere di almeno 8 caratteri.';err.classList.add('show');return;}
   if(pwd!==pwd2){err.textContent='Le password non coincidono.';err.classList.add('show');return;}
   btn.disabled=true;btn.innerHTML='<div class="spin"></div>';
-  const {data,error} = await sb.auth.signUp({email,password:pwd});
+  const {data,error} = await sb.auth.signUp({email,password:pwd,options:{data:{nome}}});
   btn.disabled=false;
   btn.innerHTML='<span class="material-symbols-outlined">person_add</span>Crea account';
   if(error){err.textContent=error.message;err.classList.add('show');return;}
   if(data?.user) {
-    await sb.from('profili').upsert({id:data.user.id,nome,ruolo:'operatore'});
+    const { error: profileError } = await sb.from('profili').upsert({id:data.user.id,nome,ruolo:'operatore'});
+    if(profileError){ err.textContent=profileError.message; err.classList.add('show'); return; }
   }
   ok.classList.add('show');
 }
@@ -1097,10 +1151,11 @@ async function doLogout() {
 }
 
 async function loadProfile() {
-  if(!currentUser)return;
-  const {data} = await sb.from('profili').select('*').eq('id',currentUser.id).single();
-  userProfile=data;
+  if(!currentUser){ userProfile=null; return; }
+  const {data,error} = await sb.from('profili').select('*').eq('id',currentUser.id).maybeSingle();
+  userProfile = error ? null : (data || null);
 }
+
 
 /* ════════════════════════════════════════
    DATA
@@ -1155,7 +1210,7 @@ function go(page) {
   const titles={dashboard:'Dashboard',elenco:'Elenco CR',importa:'Importa / Aggiungi',report:'Report & Export',impostazioni:'Impostazioni'};
   document.getElementById('tb-title').textContent=titles[page]||page;
   document.getElementById('search-field').style.display=(page==='elenco')?'flex':'none';
-  if(chartDash&&page!=='dashboard'){chartDash.destroy();chartDash=null;}
+  if(page!=='dashboard'){ destroyDashCharts(); }
   renderPage();
   closeMob();
 }
@@ -1168,40 +1223,57 @@ function renderPage() {
    DASHBOARD
 ════════════════════════════════════════ */
 function rDash() {
-  const att=DB_CR.filter(c=>c.stato==='attivo');
-  const verdi=att.filter(c=>statoSemaforo(DB_AD[c.id],c)==='verde').length;
-  const aran=att.filter(c=>statoSemaforo(DB_AD[c.id],c)==='arancio').length;
-  const rossi=att.filter(c=>statoSemaforo(DB_AD[c.id],c)==='rosso').length;
-  const gScad=giorniScad();
-
-  const bannerHTML = gScad!==null && gScad<=60 ? `
-  <div class="scad-banner">
-    <span class="material-symbols-outlined">schedule</span>
-    <div>
-      <div class="scad-title">Scadenza adempimenti — ${scad.giorno}/${scad.mese}/${new Date().getFullYear()}</div>
-      <div class="scad-sub">Verifica che tutti i CR siano in regola prima della scadenza</div>
-    </div>
-    <div class="scad-days">${gScad}<span>gg</span></div>
-  </div>` : '';
-
+  destroyDashCharts();
+  const att = DB_CR.filter(c=>c.stato==='attivo');
+  const verdi = att.filter(c=>statoSemaforo(DB_AD[c.id],c)==='verde').length;
+  const aran = att.filter(c=>statoSemaforo(DB_AD[c.id],c)==='arancio').length;
+  const rossi = att.filter(c=>statoSemaforo(DB_AD[c.id],c)==='rosso').length;
+  const gScad = giorniScad();
   const pctVerdi = att.length ? Math.round(verdi/att.length*100) : 0;
   const pctAran  = att.length ? Math.round(aran/att.length*100) : 0;
   const pctRossi = att.length ? Math.round(rossi/att.length*100) : 0;
 
-  const sollRows = DB_CR.filter(c=>{
-    if(c.stato!=='attivo')return false;
-    const s=statoSemaforo(DB_AD[c.id],c);
-    return s==='arancio'||s==='rosso';
-  }).slice(0,7).map(cr=>{
-    const ad=DB_AD[cr.id];
-    const s=statoSemaforo(ad,cr);
-    const manc=mancantiOb(ad);
-    const tags=manc.map(m=>`<span class="manca ${s==='rosso'?'red':''}">${m.label}</span>`).join('');
+  const bannerHTML = gScad!==null && gScad<=60 ? `
+    <div class="scad-banner">
+      <span class="material-symbols-outlined">schedule</span>
+      <div>
+        <div class="scad-title">Scadenza adempimenti — ${scad.giorno}/${scad.mese}/${new Date().getFullYear()}</div>
+        <div class="scad-sub">Verifica che tutti i CR siano in regola prima della scadenza</div>
+      </div>
+      <div class="scad-days">${gScad}<span>gg</span></div>
+    </div>` : '';
+
+  const daSollecitare = att
+    .filter(c=>{
+      const s = statoSemaforo(DB_AD[c.id], c);
+      return s==='arancio' || s==='rosso';
+    })
+    .sort((a,b)=>{
+      const sa = statoSemaforo(DB_AD[a.id], a);
+      const sb2 = statoSemaforo(DB_AD[b.id], b);
+      return (sa==='rosso'?0:1) - (sb2==='rosso'?0:1) || (a.cognome||'').localeCompare(b.cognome||'');
+    });
+
+  const sollRows = daSollecitare.slice(0,8).map(cr=>{
+    const ad = DB_AD[cr.id];
+    const s = statoSemaforo(ad,cr);
+    const manc = mancantiOb(ad).map(m=>`<span class="manca ${s==='rosso'?'red':''}">${m.label}</span>`).join('');
     return `<tr onclick="openScheda('${cr.id}')">
       <td class="td-name">${cr.cognome} ${cr.nome}</td>
       <td><span class="badge ${statoClass(s)}">${statoLabel(s)}</span></td>
-      <td>${tags}</td>
+      <td>${manc}</td>
       <td onclick="event.stopPropagation()"><button class="btn-ghost" style="padding:5px 10px;font-size:11px" onclick="openScheda('${cr.id}')"><span class="material-symbols-outlined" style="font-size:15px">open_in_new</span>Apri</button></td>
+    </tr>`;
+  }).join('');
+
+  const perAdempimentoRows = ADEM.map(d=>{
+    const cnt = att.filter(cr=>DB_AD[cr.id]?.[d.key]).length;
+    const pct = att.length ? Math.round(cnt/att.length*100) : 0;
+    const cl = pct>=80?'green':pct>=40?'orange':'red';
+    return `<tr>
+      <td>${d.label}${d.ob?'':' <span class="badge b-gray" style="font-size:9px">Facoltativo</span>'}</td>
+      <td style="font-weight:700;color:var(--text)">${cnt}/${att.length}</td>
+      <td><div class="prog-wrap" style="gap:10px"><div class="prog-bar"><div class="prog-fill ${cl}" style="width:${pct}%"></div></div><span class="prog-text" style="color:var(--${cl});min-width:36px">${pct}%</span></div></td>
     </tr>`;
   }).join('');
 
@@ -1221,11 +1293,11 @@ function rDash() {
       <div class="kpi-card">
         <div class="kpi-card-top">
           <div class="kpi-icon-wrap ki-green"><span class="material-symbols-outlined">check_circle</span></div>
-          <div class="kpi-trend trend-up">↑ ${pctVerdi}%</div>
+          <div class="kpi-trend trend-up">${pctVerdi}%</div>
         </div>
         <div class="kpi-value" style="color:var(--green)">${verdi}</div>
         <div class="kpi-label">In regola</div>
-        <div class="kpi-meta">Tutti gli adempimenti ok</div>
+        <div class="kpi-meta">Tutti gli adempimenti completati</div>
         <div class="kpi-bar green"></div>
       </div>
       <div class="kpi-card">
@@ -1245,125 +1317,174 @@ function rDash() {
         </div>
         <div class="kpi-value" style="color:var(--red)">${rossi}</div>
         <div class="kpi-label">Inadempienti</div>
-        <div class="kpi-meta">0 adempimenti completati</div>
+        <div class="kpi-meta">Nessun adempimento o situazione critica</div>
         <div class="kpi-bar red"></div>
       </div>
     </div>
 
-    <div class="insight-row">
+    <div class="dash-priority-grid">
+      <div class="table-wrap priority-card">
+        <div class="table-toolbar">
+          <div>
+            <div class="table-title"><span class="material-symbols-outlined">warning</span>CR da sollecitare</div>
+            <div class="table-note">${daSollecitare.length} CR richiedono attenzione immediata</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+            <span class="badge b-red">${rossi} critici</span>
+            <span class="badge b-orange">${aran} in sospeso</span>
+            <button class="btn-ghost" style="font-size:12px" onclick="go('elenco')"><span class="material-symbols-outlined">arrow_forward</span>Apri elenco</button>
+          </div>
+        </div>
+        ${sollRows ? `
+          <table class="priority-table">
+            <thead><tr><th>Nome CR</th><th>Stato</th><th>Cosa manca</th><th></th></tr></thead>
+            <tbody>${sollRows}</tbody>
+          </table>` :
+          `<div class="empty priority-empty"><span class="material-symbols-outlined">check_circle</span><p>Tutti i CR attivi sono in regola.</p></div>`
+        }
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><span class="material-symbols-outlined">donut_large</span>Panoramica</div>
+          <select class="inline-select" onchange="changeDashViz(this.value)">
+            <option value="doughnut" ${dashVizMode==='doughnut'?'selected':''}>Ciambella</option>
+            <option value="polarArea" ${dashVizMode==='polarArea'?'selected':''}>Area polare</option>
+            <option value="bar" ${dashVizMode==='bar'?'selected':''}>Barre</option>
+          </select>
+        </div>
+        <div class="card-body">
+          <div class="chart-box-compact"><canvas id="chart-overview"></canvas></div>
+          <div class="stat-list" style="margin-top:14px">
+            <div class="stat-item">
+              <div class="stat-left"><span class="stat-dot" style="background:#22c55e"></span>In regola</div>
+              <div style="font-weight:800;color:var(--text)">${verdi}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-left"><span class="stat-dot" style="background:#f59e0b"></span>In sospeso</div>
+              <div style="font-weight:800;color:var(--text)">${aran}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-left"><span class="stat-dot" style="background:#ef4444"></span>Inadempienti</div>
+              <div style="font-weight:800;color:var(--text)">${rossi}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-secondary-grid">
       <div class="card">
         <div class="card-head">
           <div class="card-title"><span class="material-symbols-outlined">bar_chart</span>Avanzamento adempimenti ${annoAttivo}</div>
           <div style="font-size:11px;color:var(--text3)">${att.length} CR attivi</div>
         </div>
-        <div class="card-body" style="padding-bottom:16px">
-          <canvas id="chart-dash" height="200"></canvas>
+        <div class="card-body">
+          <div class="chart-box-small"><canvas id="chart-dash-status"></canvas></div>
         </div>
       </div>
+
       <div class="card">
         <div class="card-head">
-          <div class="card-title"><span class="material-symbols-outlined">donut_large</span>Panoramica</div>
+          <div class="card-title"><span class="material-symbols-outlined">analytics</span>Avanzamento per adempimento — ${annoAttivo}</div>
         </div>
-        <div style="padding:6px 0 0">
-          <div class="gauge-wrap">
-            <canvas id="chart-gauge" width="200" height="110"></canvas>
-            <div class="gauge-center">
-              <div class="gauge-pct">${pctVerdi}%</div>
-              <div class="gauge-lbl">In regola</div>
-            </div>
-          </div>
-          <div class="gauge-legend">
-            <div class="gauge-leg-item">
-              <div class="gauge-leg-left"><div class="gauge-leg-dot" style="background:var(--green)"></div>In regola</div>
-              <div class="gauge-leg-val">${verdi}</div>
-            </div>
-            <div class="gauge-leg-item">
-              <div class="gauge-leg-left"><div class="gauge-leg-dot" style="background:var(--orange)"></div>In sospeso</div>
-              <div class="gauge-leg-val">${aran}</div>
-            </div>
-            <div class="gauge-leg-item">
-              <div class="gauge-leg-left"><div class="gauge-leg-dot" style="background:var(--red)"></div>Inadempienti</div>
-              <div class="gauge-leg-val">${rossi}</div>
-            </div>
-          </div>
+        <div class="card-body">
+          <table>
+            <thead><tr><th>Adempimento</th><th>Completati</th><th>Percentuale</th></tr></thead>
+            <tbody>${perAdempimentoRows}</tbody>
+          </table>
         </div>
       </div>
-    </div>
-
-    <div class="table-wrap">
-      <div class="table-toolbar">
-        <div class="table-title"><span class="material-symbols-outlined">warning</span>CR da sollecitare</div>
-        <button class="btn-ghost" style="margin-left:auto;font-size:12px" onclick="go('elenco')"><span class="material-symbols-outlined">arrow_forward</span>Vedi tutti</button>
-      </div>
-      ${sollRows?`<table><thead><tr><th>Nome CR</th><th>Stato</th><th>Cosa manca</th><th></th></tr></thead><tbody>${sollRows}</tbody></table>`:`<div class="empty"><span class="material-symbols-outlined">check_circle</span><p>Tutti i CR attivi sono in regola.</p></div>`}
     </div>`;
 
   setTimeout(()=>{
     const isDk = theme==='dark';
-    const gridC = isDk?'rgba(255,255,255,.06)':'rgba(0,0,0,.06)';
-    const textC = isDk?'#8892a4':'#9ca3af';
-    const chartData = ADEM.map(d=>{
-      const cnt=att.filter(cr=>DB_AD[cr.id]&&DB_AD[cr.id][d.key]).length;
-      return {label:d.label,cnt,pct:att.length?Math.round(cnt/att.length*100):0};
-    });
-    const ctx=document.getElementById('chart-dash');
-    if(!ctx)return;
-    if(chartDash)chartDash.destroy();
-    chartDash=new Chart(ctx,{
-      type:'bar',
-      data:{
-        labels:chartData.map(d=>d.label),
-        datasets:[{
-          data:chartData.map(d=>d.cnt),
-          backgroundColor:chartData.map(d=>d.pct>=80?'rgba(22,163,74,.75)':d.pct>=40?'rgba(217,119,6,.75)':'rgba(220,38,38,.65)'),
-          borderRadius:6,
-          borderSkipped:false,
-        }]
-      },
-      options:{
-        indexAxis:'y',responsive:true,
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw} CR — ${chartData[c.dataIndex].pct}%`}}},
-        scales:{
-          x:{max:att.length||1,grid:{color:gridC},ticks:{color:textC,precision:0,font:{size:11}}},
-          y:{grid:{display:false},ticks:{color:textC,font:{size:11}}}
+    const gridC = isDk ? 'rgba(255,255,255,.08)' : 'rgba(15,23,42,.08)';
+    const textC = isDk ? '#94a3b8' : '#64748b';
+    const labels = ['In regola','In sospeso','Inadempienti'];
+    const values = [verdi, aran, rossi];
+    const colors = ['#22c55e','#f59e0b','#ef4444'];
+
+    const overviewCtx = document.getElementById('chart-overview');
+    if(overviewCtx){
+      const common = {
+        data: {
+          labels,
+          datasets: [{
+            data: values,
+            backgroundColor: colors,
+            borderColor: dashVizMode==='bar' ? colors : (isDk ? '#161b27' : '#ffffff'),
+            borderWidth: dashVizMode==='bar' ? 1 : 3,
+            borderRadius: dashVizMode==='bar' ? 10 : 0
+          }]
+        },
+        options: {
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{
+            legend:{display:dashVizMode!=='bar', position:'bottom', labels:{color:textC, boxWidth:10, usePointStyle:true}},
+            tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw}`}}
+          },
+          scales: dashVizMode==='bar' ? {
+            x:{grid:{display:false},ticks:{color:textC,font:{size:11}}},
+            y:{grid:{color:gridC},ticks:{color:textC,precision:0,font:{size:11}},beginAtZero:true}
+          } : {}
         }
-      }
-    });
-    // Gauge
-    const gCtx=document.getElementById('chart-gauge');
-    if(gCtx){
-      const total=att.length||1;
-      new Chart(gCtx,{
-        type:'doughnut',
+      };
+      dashCharts.push(new Chart(overviewCtx, { type: dashVizMode, ...common }));
+    }
+
+    const statusCtx = document.getElementById('chart-dash-status');
+    if(statusCtx){
+      const chartData = ADEM.map(d=>{
+        const cnt = att.filter(cr=>DB_AD[cr.id] && DB_AD[cr.id][d.key]).length;
+        return {label:d.label, cnt, pct:att.length ? Math.round(cnt/att.length*100) : 0};
+      });
+      dashCharts.push(new Chart(statusCtx,{
+        type:'bar',
         data:{
+          labels:chartData.map(d=>d.label),
           datasets:[{
-            data:[verdi,aran,rossi,Math.max(0,total-verdi-aran-rossi)].map(v=>Math.max(v,0)),
-            backgroundColor:['rgba(22,163,74,.8)','rgba(217,119,6,.8)','rgba(220,38,38,.8)','rgba(0,0,0,.05)'],
-            borderWidth:0,
-            circumference:180,rotation:270,
+            data:chartData.map(d=>d.cnt),
+            backgroundColor:chartData.map(d=>d.pct>=80?'#22c55e':d.pct>=40?'#f59e0b':'#ef4444'),
+            borderColor:chartData.map(d=>d.pct>=80?'#16a34a':d.pct>=40?'#d97706':'#dc2626'),
+            borderWidth:1.5,
+            borderRadius:8,
+            borderSkipped:false
           }]
         },
         options:{
-          cutout:'75%',responsive:false,
-          plugins:{legend:{display:false},tooltip:{enabled:false}}
+          responsive:true,
+          maintainAspectRatio:false,
+          indexAxis:'y',
+          plugins:{
+            legend:{display:false},
+            tooltip:{callbacks:{label:c=>`${c.raw} CR — ${chartData[c.dataIndex].pct}%`}}
+          },
+          scales:{
+            x:{max:att.length||1,grid:{color:gridC},ticks:{color:textC,precision:0,font:{size:11}}},
+            y:{grid:{display:false},ticks:{color:textC,font:{size:11}}}
+          }
         }
-      });
+      }));
     }
-  },50);
+  }, 30);
 }
 
 /* ════════════════════════════════════════
    ELENCO CR
 ════════════════════════════════════════ */
 function rElenco() {
-  const lista=DB_CR.filter(cr=>{
-    const matchS=!filtroSearch||[cr.nome,cr.cognome,cr.codice_fiscale,cr.numero_cr,cr.email].some(v=>v&&v.toLowerCase().includes(filtroSearch.toLowerCase()));
-    const s=statoSemaforo(DB_AD[cr.id],cr);
-    const matchF=filtroStato==='tutti'||s===filtroStato;
-    return matchS&&matchF;
+  const lista = DB_CR.filter(cr=>{
+    const ad = DB_AD[cr.id];
+    const matchS = !filtroSearch || [cr.nome,cr.cognome,cr.codice_fiscale,cr.numero_cr,cr.email].some(v=>v&&v.toLowerCase().includes(filtroSearch.toLowerCase()));
+    const s = statoSemaforo(ad,cr);
+    const matchF = filtroStato==='tutti' || s===filtroStato;
+    const matchAdemp = filtroAdempMancanti.length===0 || filtroAdempMancanti.every(key => !ad || !ad[key]);
+    return matchS && matchF && matchAdemp;
   });
 
-  const rows=lista.map(cr=>{
+  const rows = lista.map(cr=>{
     const ad=DB_AD[cr.id];
     const s=statoSemaforo(ad,cr);
     const {tot,totale}=contaAdem(ad);
@@ -1407,13 +1528,29 @@ function rElenco() {
           </select>
           <button class="btn-ghost" onclick="esportaCSV()"><span class="material-symbols-outlined">download</span>CSV</button>
         </div>
+        <div class="filter-panel">
+          <div class="filter-title">Visualizzazioni personalizzate · adempimenti mancanti</div>
+          <div class="filter-chips">
+            ${ADEM_OB.map(def=>`
+              <label class="filter-chip">
+                <input type="checkbox" ${filtroAdempMancanti.includes(def.key)?'checked':''} onchange="toggleFiltroAdemp('${def.key}',this.checked)">
+                ${def.label}
+              </label>
+            `).join('')}
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+            <div class="table-note">Puoi combinare più filtri insieme. Esempio: Appendice A + Polizza.</div>
+            <button class="btn-ghost" style="font-size:12px" onclick="clearAdempFilters()"><span class="material-symbols-outlined">filter_alt_off</span>Reset filtri</button>
+          </div>
+        </div>
       </div>
       <div class="bulk-bar ${selectedCrs.size>0?'show':''}" id="bulk-bar">
         <span class="bulk-n">${selectedCrs.size} selezionati</span>
         <button class="btn-ghost" style="font-size:12px" onclick="bulkAdem()"><span class="material-symbols-outlined">task_alt</span>Imposta adempimento</button>
+        ${userProfile?.ruolo==='admin'?`<button class="btn-ghost btn-danger" style="font-size:12px" onclick="bulkDeleteSelected()"><span class="material-symbols-outlined">delete</span>Elimina selezionati</button>`:''}
         <button class="btn-ghost" style="font-size:12px" onclick="deselAll()">Deseleziona</button>
       </div>
-      ${lista.length===0?`<div class="empty"><span class="material-symbols-outlined">search_off</span><p>Nessun CR trovato.</p></div>`:`
+      ${lista.length===0?`<div class="empty"><span class="material-symbols-outlined">search_off</span><p>Nessun CR trovato con i filtri attivi.</p></div>`:`
       <table>
         <thead><tr>
           <th><input type="checkbox" id="sel-all" onchange="selAll(this.checked)" style="cursor:pointer;accent-color:var(--blue)"></th>
@@ -1428,6 +1565,23 @@ function onSearch(){filtroSearch=document.getElementById('search-inp').value;if(
 function toggleSel(id,v){if(v)selectedCrs.add(id);else selectedCrs.delete(id);const b=document.getElementById('bulk-bar');if(b)b.classList.toggle('show',selectedCrs.size>0);const bc=document.querySelector('.bulk-n');if(bc)bc.textContent=`${selectedCrs.size} selezionati`;}
 function selAll(v){DB_CR.forEach(c=>{if(v)selectedCrs.add(c.id);else selectedCrs.delete(c.id);});rElenco();}
 function deselAll(){selectedCrs.clear();rElenco();}
+function toggleFiltroAdemp(key, checked){
+  if(checked && !filtroAdempMancanti.includes(key)) filtroAdempMancanti.push(key);
+  if(!checked) filtroAdempMancanti = filtroAdempMancanti.filter(k=>k!==key);
+  rElenco();
+}
+function clearAdempFilters(){ filtroAdempMancanti = []; rElenco(); }
+async function bulkDeleteSelected(){
+  if(userProfile?.ruolo!=='admin' || !selectedCrs.size) return;
+  const ok = window.confirm(`Eliminare definitivamente ${selectedCrs.size} CR selezionati? L'operazione è irreversibile.`);
+  if(!ok) return;
+  const ids = Array.from(selectedCrs);
+  const {error} = await sb.from('cr').delete().in('id', ids);
+  if(error){ showToast('Errore: '+error.message,'err'); return; }
+  selectedCrs.clear();
+  showToast('CR selezionati eliminati');
+  await loadCR(); await loadAD(); rElenco();
+}
 async function bulkAdem(){
   if(!selectedCrs.size)return;
   const adem=ADEM.map(d=>d.key);
@@ -1492,6 +1646,7 @@ async function openScheda(crId) {
         <button class="scheda-btn" onclick="openModificaCR('${crId}')"><span class="material-symbols-outlined">edit</span>Modifica</button>
         ${cr.stato==='attivo'&&userProfile?.ruolo==='admin'?`<button class="scheda-btn scheda-btn-danger" onclick="openRevoca('${crId}')"><span class="material-symbols-outlined">cancel</span>Revoca</button>`:''}
         ${cr.stato==='revocato'&&userProfile?.ruolo==='admin'?`<button class="scheda-btn" onclick="ripristina('${crId}')"><span class="material-symbols-outlined">restore</span>Ripristina</button>`:''}
+        ${userProfile?.ruolo==='admin'?`<button class="scheda-btn scheda-btn-danger" onclick="openElimina('${crId}')"><span class="material-symbols-outlined">delete</span>Elimina</button>`:''}
       </div>
     </div>
 
@@ -1781,18 +1936,10 @@ async function salvaNuovoCRInline(){
    REPORT
 ════════════════════════════════════════ */
 function rReport(){
-  const att=DB_CR.filter(c=>c.stato==='attivo');
-  const rows=ADEM.map(d=>{
-    const cnt=att.filter(cr=>DB_AD[cr.id]?.[d.key]).length;
-    const pct=att.length?Math.round(cnt/att.length*100):0;
-    const cl=pct>=80?'green':pct>=40?'orange':'red';
-    return `<tr><td>${d.label}${d.ob?'':' <span class="badge b-gray" style="font-size:9px">Facoltativo</span>'}</td><td style="font-weight:700;color:var(--text)">${cnt}/${att.length}</td><td><div class="prog-wrap" style="gap:10px"><div class="prog-bar"><div class="prog-fill ${cl}" style="width:${pct}%"></div></div><span class="prog-text" style="color:var(--${cl});min-width:36px">${pct}%</span></div></td></tr>`;
-  }).join('');
   document.getElementById('page-content').innerHTML=`
     <div class="rep-card"><div class="rep-icon"><span class="material-symbols-outlined">download</span></div><div class="rep-info"><div class="rep-title">Export CSV completo</div><div class="rep-sub">Tutti i CR con tutti gli adempimenti — anno ${annoAttivo}</div></div><button class="btn-blue" onclick="esportaCSV()"><span class="material-symbols-outlined">download</span>Scarica</button></div>
     <div class="rep-card"><div class="rep-icon"><span class="material-symbols-outlined" style="color:var(--orange)">warning</span></div><div class="rep-info"><div class="rep-title">Export CSV "Da sollecitare"</div><div class="rep-sub">Solo CR non in regola con colonna "cosa manca"</div></div><button class="btn-blue" onclick="esportaCSVSoll()"><span class="material-symbols-outlined">download</span>Scarica</button></div>
-    <div class="rep-card"><div class="rep-icon"><span class="material-symbols-outlined" style="color:var(--green)">picture_as_pdf</span></div><div class="rep-info"><div class="rep-title">Report PDF</div><div class="rep-sub">Riepilogo adempimenti ${annoAttivo} per stampa</div></div><button class="btn-blue" onclick="stampaPDF()"><span class="material-symbols-outlined">print</span>Stampa</button></div>
-    <div class="card"><div class="card-head"><div class="card-title"><span class="material-symbols-outlined">analytics</span>Avanzamento per adempimento — ${annoAttivo}</div></div><div class="card-body"><table><thead><tr><th>Adempimento</th><th>Completati</th><th>Percentuale</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+    <div class="rep-card"><div class="rep-icon"><span class="material-symbols-outlined" style="color:var(--green)">picture_as_pdf</span></div><div class="rep-info"><div class="rep-title">Report PDF</div><div class="rep-sub">Riepilogo adempimenti ${annoAttivo} per stampa</div></div><button class="btn-blue" onclick="stampaPDF()"><span class="material-symbols-outlined">print</span>Stampa</button></div>`;
 }
 function esportaCSV(crList){
   const lista=crList||DB_CR;
@@ -1828,8 +1975,20 @@ function stampaPDF(){
 ════════════════════════════════════════ */
 function rImpost(){
   const isAdmin=userProfile?.ruolo==='admin';
+  const parts=getProfileNameParts();
   document.getElementById('page-content').innerHTML=`
-    <div style="max-width:620px">
+    <div style="max-width:760px">
+      <div class="sett-card">
+        <div class="sett-section-title"><span class="material-symbols-outlined">person</span>Profilo utente</div>
+        <div class="profile-card-grid">
+          <div class="fg"><label>Nome</label><input type="text" id="p-nome" value="${parts.nome||''}"></div>
+          <div class="fg"><label>Cognome</label><input type="text" id="p-cognome" value="${parts.cognome||''}"></div>
+          <div class="fg full"><label>Email</label><input type="email" id="p-email" value="${currentUser?.email||''}"></div>
+        </div>
+        <div class="profile-help">Il nome viene salvato nel profilo interno. La modifica dell'email passa da Supabase Auth e può richiedere conferma via email, in base alle impostazioni del progetto.</div>
+        <button class="btn-blue" style="margin-top:14px" onclick="saveMyProfile()"><span class="material-symbols-outlined">save</span>Salva profilo</button>
+      </div>
+
       <div class="sett-card">
         <div class="sett-section-title"><span class="material-symbols-outlined">calendar_today</span>Anno e scadenze</div>
         <div class="sett-row">
@@ -1847,6 +2006,7 @@ function rImpost(){
           </div>
         </div>
       </div>
+
       <div class="sett-card">
         <div class="sett-section-title"><span class="material-symbols-outlined">palette</span>Aspetto</div>
         <div class="sett-row">
@@ -1854,6 +2014,7 @@ function rImpost(){
           <div class="sw ${theme==='dark'?'on':''}" onclick="toggleTheme()" style="background:${theme==='dark'?'var(--blue)':'rgba(0,0,0,.1)'}"></div>
         </div>
       </div>
+
       <div class="sett-card">
         <div class="sett-section-title"><span class="material-symbols-outlined">backup</span>Backup</div>
         <div class="sett-row">
@@ -1861,8 +2022,30 @@ function rImpost(){
           <button class="btn-ghost" onclick="backupJSON()"><span class="material-symbols-outlined">download</span>Backup</button>
         </div>
       </div>
+
       ${isAdmin?`<div class="sett-card"><div class="sett-section-title"><span class="material-symbols-outlined">manage_accounts</span>Utenti</div><div class="sett-row"><div><div class="sett-label">Gestione utenti</div><div class="sett-sub">Aggiungi, modifica ruoli e profili</div></div><a href="${SB_URL}" target="_blank"><button class="btn-ghost"><span class="material-symbols-outlined">open_in_new</span>Apri Supabase</button></a></div></div>`:''}
     </div>`;
+}
+async function saveMyProfile(){
+  const nome = (document.getElementById('p-nome')?.value || '').trim();
+  const cognome = (document.getElementById('p-cognome')?.value || '').trim();
+  const email = (document.getElementById('p-email')?.value || '').trim();
+  if(!nome){ showToast('Inserisci almeno il nome','err'); return; }
+  const fullName = [nome, cognome].filter(Boolean).join(' ');
+  const {error:profileError} = await sb.from('profili').update({ nome: fullName }).eq('id', currentUser.id);
+  if(profileError){ showToast('Errore profilo: '+profileError.message,'err'); return; }
+  if(email && email !== currentUser.email){
+    const {error:authError} = await sb.auth.updateUser({ email });
+    if(authError){ showToast('Profilo salvato, ma email non aggiornata: '+authError.message,'err'); await loadProfile(); showApp(); return; }
+    showToast('Profilo aggiornato. Controlla la casella email se è richiesta conferma.','info');
+  } else {
+    showToast('Profilo aggiornato ✓');
+  }
+  await loadProfile();
+  const { data:{session} } = await sb.auth.getSession();
+  if(session) currentUser = session.user;
+  showApp();
+  if(currentPage==='impostazioni') rImpost();
 }
 async function backupJSON(){
   const {data:allCR}=await sb.from('cr').select('*');
@@ -1926,6 +2109,7 @@ function fmtDate(iso){
 /* ════════════════════════════════════════
    MOBILE
 ════════════════════════════════════════ */
+function changeDashViz(mode){ dashVizMode = mode; if(currentPage==='dashboard') rDash(); }
 function openMob(){document.getElementById('sidebar').classList.add('open');document.getElementById('mob-ov').classList.add('open');}
 function closeMob(){document.getElementById('sidebar').classList.remove('open');document.getElementById('mob-ov').classList.remove('open');}
 
