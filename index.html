@@ -838,7 +838,7 @@ tbody tr:hover{background:var(--surface2)}
               <input type="password" id="s-pwd2" placeholder="Ripeti la password">
             </div>
             <div class="auth-err" id="s-err">Errore nella registrazione.</div>
-            <div class="auth-ok" id="s-ok">Account creato! Controlla la tua email per confermare.</div>
+            <div class="auth-ok" id="s-ok">Account creato! Accesso in corso…</div>
             <button class="auth-submit" id="s-btn" onclick="doSignup()">
               <span class="material-symbols-outlined">person_add</span>
               Crea account
@@ -1095,12 +1095,14 @@ function showApp() {
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('app-screen').style.display='block';
   document.getElementById('tb-anno').textContent = annoAttivo;
-  if(userProfile) {
-    const ini = (userProfile.nome||currentUser.email||'U').charAt(0).toUpperCase();
-    document.getElementById('sb-av').textContent = ini;
-    document.getElementById('sb-uname').textContent = getProfileDisplayName();
-    document.getElementById('sb-urole').textContent = userProfile.ruolo==='admin'?'Amministratore':'Operatore';
-  }
+  updateSidebar();
+}
+function updateSidebar() {
+  const nome = getProfileDisplayName();
+  const ini = nome.charAt(0).toUpperCase();
+  document.getElementById('sb-av').textContent = ini;
+  document.getElementById('sb-uname').textContent = nome;
+  document.getElementById('sb-urole').textContent = userProfile?.ruolo==='admin'?'Amministratore':'Operatore';
 }
 
 function getProfileNameParts() {
@@ -1112,6 +1114,17 @@ function getProfileNameParts() {
 function getProfileDisplayName() {
   const full = (userProfile?.nome || '').trim();
   return full || currentUser?.email || 'Utente';
+}
+function getFirstName() {
+  const full = (userProfile?.nome || '').trim();
+  if(!full) return currentUser?.email?.split('@')[0] || 'Utente';
+  return full.split(/\s+/)[0];
+}
+function getSaluto() {
+  const h = new Date().getHours();
+  if(h >= 5  && h < 12) return 'Buongiorno';
+  if(h >= 12 && h < 18) return 'Buon pomeriggio';
+  return 'Buonasera';
 }
 
 /* ════════════════════════════════════════
@@ -1164,11 +1177,19 @@ async function doSignup() {
   btn.disabled=false;
   btn.innerHTML='<span class="material-symbols-outlined">person_add</span>Crea account';
   if(error){err.textContent=error.message;err.classList.add('show');return;}
-  if(data?.user) {
-    const { error: profileError } = await sb.from('profili').upsert({id:data.user.id,nome,ruolo:'operatore'});
-    if(profileError){ err.textContent=profileError.message; err.classList.add('show'); return; }
+  // Con "Confirm email" OFF su Supabase, la sessione e' gia' attiva subito dopo il signup
+  if(data?.session) {
+    currentUser=data.user;
+    // Piccola attesa per dare tempo al trigger DB di creare il profilo
+    await new Promise(r=>setTimeout(r,700));
+    await loadProfile();
+    showApp();
+    await loadAll();
+    return;
   }
-  ok.classList.add('show');
+  // Fallback: sessione non immediata (non dovrebbe accadere con Confirm email OFF)
+  err.textContent='Account creato ma sessione non avviata. Prova ad accedere con le credenziali appena inserite.';
+  err.classList.add('show');
 }
 
 async function doLogout() {
@@ -1306,6 +1327,10 @@ function rDash() {
   }).join('');
 
   document.getElementById('page-content').innerHTML = `
+    <div style="margin-bottom:20px">
+      <div style="font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.4px;line-height:1.2">${getSaluto()}, ${getFirstName()}.</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:4px">${new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'})} · Anno adempimenti <strong style="color:var(--text)">${annoAttivo}</strong></div>
+    </div>
     ${bannerHTML}
     <div class="kpi-grid">
       <div class="kpi-card">
@@ -2104,6 +2129,7 @@ async function saveMyProfile(){
     showToast('Profilo aggiornato ✓');
   }
   await loadProfile();
+  updateSidebar();
   const { data:{session} } = await sb.auth.getSession();
   if(session) currentUser = session.user;
   showApp();
