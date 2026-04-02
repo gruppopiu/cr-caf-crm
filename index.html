@@ -705,6 +705,7 @@ tbody tr:hover{background:var(--surface2)}
 
 /* ── SPINNER ─────────── */
 .spin{display:inline-block;width:15px;height:15px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:rot .6s linear infinite;vertical-align:middle}
+.spinner-sm{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:rot .6s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes rot{to{transform:rotate(360deg)}}
 
 
@@ -988,11 +989,31 @@ tbody tr:hover{background:var(--surface2)}
       <button class="btn-icon" onclick="closeModal('ov-elimina')"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal-body">
-      <p style="color:var(--text2);font-size:13px">Eliminare definitivamente <strong id="el-nome"></strong>? Tutti gli adempimenti e i log verranno rimossi. Irreversibile.</p>
+      <p style="color:var(--text2);font-size:13px">Eliminare definitivamente <strong id="el-nome"></strong>? Tutti gli adempimenti e i log verranno rimossi. L'operazione è irreversibile.</p>
     </div>
     <div class="modal-foot">
       <button class="btn-ghost" onclick="closeModal('ov-elimina')">Annulla</button>
-      <button class="btn-ghost btn-danger" onclick="confermaElimina()"><span class="material-symbols-outlined">delete</span>Elimina</button>
+      <button class="btn-ghost btn-danger" id="btn-conferma-elimina" onclick="confermaElimina()"><span class="material-symbols-outlined">delete</span>Elimina</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ov-elimina-bulk" onclick="ovClick(event,'ov-elimina-bulk')">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <div class="modal-title" style="color:var(--red)">Eliminare i CR selezionati?</div>
+      <button class="btn-icon" onclick="closeModal('ov-elimina-bulk')"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--red-bg);border:1px solid var(--red-border);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px">
+        <span class="material-symbols-outlined" style="color:var(--red);font-size:20px;flex-shrink:0;margin-top:1px">warning</span>
+        <p style="color:var(--red-strong);font-size:13px;font-weight:600;line-height:1.5">Stai per eliminare <strong id="bulk-el-count"></strong> CR. Tutti gli adempimenti e i log associati verranno rimossi definitivamente. L'operazione è irreversibile.</p>
+      </div>
+      <div id="bulk-el-lista" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r);font-size:12px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeModal('ov-elimina-bulk')">Annulla</button>
+      <button class="btn-ghost btn-danger" id="btn-conferma-elimina-bulk" onclick="confermaBulkDelete()"><span class="material-symbols-outlined">delete</span>Elimina tutti</button>
     </div>
   </div>
 </div>
@@ -1594,16 +1615,31 @@ function toggleFiltroAdemp(key, checked){
   rElenco();
 }
 function clearAdempFilters(){ filtroAdempMancanti = []; filtroAdempMode='all'; rElenco(); }
-async function bulkDeleteSelected(){
-  if(userProfile?.ruolo!=='admin' || !selectedCrs.size) return;
-  const ok = window.confirm(`Eliminare definitivamente ${selectedCrs.size} CR selezionati? L'operazione è irreversibile.`);
-  if(!ok) return;
-  const ids = Array.from(selectedCrs);
-  const {error} = await sb.from('cr').delete().in('id', ids);
-  if(error){ showToast('Errore: '+error.message,'err'); return; }
+function bulkDeleteSelected(){
+  if(userProfile?.ruolo!=='admin'||!selectedCrs.size)return;
+  const ids=Array.from(selectedCrs);
+  const crs=ids.map(id=>DB_CR.find(c=>c.id===id)).filter(Boolean);
+  document.getElementById('bulk-el-count').textContent=`${ids.length} CR`;
+  const listaHtml=crs.map(cr=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border)">
+    <span class="material-symbols-outlined" style="font-size:15px;color:var(--red)">person_remove</span>
+    <span style="font-weight:600;color:var(--text)">${cr.cognome} ${cr.nome}</span>
+    <span style="margin-left:auto;font-family:monospace;font-size:11px;color:var(--text3)">${cr.numero_cr}</span>
+  </div>`).join('');
+  document.getElementById('bulk-el-lista').innerHTML=listaHtml||'<p style="padding:12px;color:var(--text3)">—</p>';
+  openOv('ov-elimina-bulk');
+}
+async function confermaBulkDelete(){
+  if(userProfile?.ruolo!=='admin'||!selectedCrs.size)return;
+  const btn=document.getElementById('btn-conferma-elimina-bulk');
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner-sm"></span>Eliminazione...';}
+  const ids=Array.from(selectedCrs);
+  const {error}=await sb.from('cr').delete().in('id',ids);
+  if(btn){btn.disabled=false;btn.innerHTML='<span class="material-symbols-outlined">delete</span>Elimina tutti';}
+  if(error){showToast('Errore: '+error.message,'err');return;}
   selectedCrs.clear();
-  showToast('CR selezionati eliminati');
-  await loadCR(); await loadAD(); rElenco();
+  showToast(`${ids.length} CR eliminati`,'ok');
+  closeModal('ov-elimina-bulk');
+  await loadCR();await loadAD();rElenco();
 }
 async function bulkAdem(){
   if(!selectedCrs.size)return;
@@ -1810,8 +1846,13 @@ function openElimina(id){
   openOv('ov-elimina');
 }
 async function confermaElimina(){
-  await sb.from('cr').delete().eq('id',eliminaCrId);
-  showToast('CR eliminato');closeModal('ov-elimina');closeModal('ov-scheda');
+  const btn=document.getElementById('btn-conferma-elimina');
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner-sm"></span>Eliminazione...';}
+  const {error}=await sb.from('cr').delete().eq('id',eliminaCrId);
+  if(btn){btn.disabled=false;btn.innerHTML='<span class="material-symbols-outlined">delete</span>Elimina';}
+  if(error){showToast('Errore: '+error.message,'err');return;}
+  showToast('CR eliminato');
+  closeModal('ov-elimina');closeModal('ov-scheda');
   await loadCR();await loadAD();renderPage();
 }
 
