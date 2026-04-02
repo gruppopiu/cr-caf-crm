@@ -4,2467 +4,1934 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CR Platform — GruppoPiù CAF</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@600;700;800;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-/* ===========================
-   CSS VARIABLES & RESET
-=========================== */
-:root {
-  --bg: #f8fafc;
-  --bg2: #ffffff;
-  --bg3: #f1f5f9;
-  --bg4: #e2e8f0;
-  --border: #e2e8f0;
-  --border2: #cbd5e1;
-  --text: #0f172a;
-  --text2: #475569;
-  --text3: #94a3b8;
-  --accent: #6366f1;
-  --accent-rgb: 99,102,241;
-  --accent-bg: rgba(99,102,241,.08);
-  --green: #10b981;
-  --green-bg: rgba(16,185,129,.1);
-  --red: #ef4444;
-  --red-bg: rgba(239,68,68,.1);
-  --orange: #f59e0b;
-  --orange-bg: rgba(245,158,11,.1);
-  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-  --shadow2: 0 4px 16px rgba(0,0,0,.08);
-  --r: 8px;
-  --r2: 14px;
-  --sidebar-w: 240px;
+:root{
+  --canvas:#f0f2f7;
+  --surface:#ffffff;
+  --surface2:#f7f8fb;
+  --border:rgba(0,0,0,.07);
+  --border2:rgba(0,0,0,.12);
+  --text:#111827;
+  --text2:#6b7280;
+  --text3:#9ca3af;
+  --blue:#3b82f6;
+  --blue-bg:rgba(59,130,246,.09);
+  --blue-border:rgba(59,130,246,.2);
+  --green:#16a34a;
+  --green-bg:rgba(22,163,74,.09);
+  --green-border:rgba(22,163,74,.2);
+  --orange:#d97706;
+  --orange-bg:rgba(217,119,6,.09);
+  --orange-border:rgba(217,119,6,.2);
+  --red:#dc2626;
+  --red-bg:rgba(220,38,38,.09);
+  --red-border:rgba(220,38,38,.2);
+  --sidebar:#1c2333;
+  --sidebar-w:232px;
+  --sh-sm:0 1px 2px rgba(0,0,0,.05),0 1px 3px rgba(0,0,0,.06);
+  --sh:0 2px 6px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sh-md:0 4px 14px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.05);
+  --r:10px;
+  --r2:12px;
 }
-.dark {
-  --bg: #0f172a;
-  --bg2: #1e293b;
-  --bg3: #263148;
-  --bg4: #334155;
-  --border: #1e293b;
-  --border2: #334155;
-  --text: #f1f5f9;
-  --text2: #94a3b8;
-  --text3: #475569;
-  --accent: #818cf8;
-  --accent-rgb: 129,140,248;
-  --accent-bg: rgba(129,140,248,.1);
-  --green: #34d399;
-  --green-bg: rgba(52,211,153,.1);
-  --red: #f87171;
-  --red-bg: rgba(248,113,113,.1);
-  --orange: #fbbf24;
-  --orange-bg: rgba(251,191,36,.1);
-  --shadow: 0 1px 3px rgba(0,0,0,.3);
-  --shadow2: 0 4px 20px rgba(0,0,0,.4);
+.dk{
+  --canvas:#0f1117;
+  --surface:#161b27;
+  --surface2:#1c2235;
+  --border:rgba(255,255,255,.07);
+  --border2:rgba(255,255,255,.13);
+  --text:#f1f5f9;
+  --text2:#8892a4;
+  --text3:#4b5675;
+  --sh-sm:0 1px 2px rgba(0,0,0,.3);
+  --sh:0 2px 8px rgba(0,0,0,.3);
+  --sh-md:0 6px 20px rgba(0,0,0,.4);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;font-family:'Inter',sans-serif;font-size:14px;color:var(--text);background:var(--bg);transition:background .2s,color .2s}
+html,body{height:100%;font-family:'Inter',sans-serif;font-size:14px;color:var(--text);background:var(--canvas);-webkit-font-smoothing:antialiased}
 button{cursor:pointer;border:none;background:none;font-family:inherit}
-input,select,textarea{font-family:inherit;font-size:14px}
+input,select,textarea{font-family:inherit}
 a{text-decoration:none;color:inherit}
-svg{display:block}
 
-/* ===========================
-   LAYOUT
-=========================== */
-#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+/* ── AUTH ──────────────────── */
+#auth-screen{min-height:100vh;display:flex;align-items:stretch}
 #app-screen{display:none;height:100vh;overflow:hidden}
-.app-layout{display:flex;height:100vh}
 
-/* ===========================
-   SIDEBAR
-=========================== */
-.sidebar{
-  width:var(--sidebar-w);
-  flex-shrink:0;
-  background:var(--bg2);
-  border-right:1px solid var(--border);
-  display:flex;
-  flex-direction:column;
-  height:100vh;
-  position:fixed;
-  left:0;top:0;
-  z-index:100;
-  transition:transform .25s;
+.auth-layout{display:flex;width:100%;min-height:100vh}
+.auth-panel-left{
+  width:420px;flex-shrink:0;
+  background:var(--sidebar);
+  display:flex;flex-direction:column;
+  padding:40px 36px;position:relative;overflow:hidden;
 }
-.sidebar-logo{
-  padding:20px 16px 16px;
-  border-bottom:1px solid var(--border);
+.auth-panel-left::after{
+  content:'';position:absolute;
+  width:400px;height:400px;border-radius:50%;
+  background:radial-gradient(circle,rgba(59,130,246,.15) 0%,transparent 70%);
+  bottom:-100px;right:-100px;pointer-events:none;
 }
-.sidebar-logo .app-name{
-  font-family:'Manrope',sans-serif;
-  font-weight:800;
-  font-size:17px;
-  color:var(--text);
-  letter-spacing:-.3px;
+.auth-brand{display:flex;align-items:center;gap:10px;margin-bottom:auto}
+.auth-brand-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);box-shadow:0 0 8px rgba(59,130,246,.6)}
+.auth-brand-name{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.auth-brand-sep{color:rgba(255,255,255,.2);font-weight:300}
+.auth-brand-sub{font-size:13px;color:rgba(255,255,255,.4);font-weight:400}
+.auth-hero{margin-top:auto;position:relative;z-index:1}
+.auth-hero-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 12px;
+  background:rgba(59,130,246,.15);
+  border:1px solid rgba(59,130,246,.25);
+  border-radius:20px;font-size:11px;
+  color:rgba(255,255,255,.7);font-weight:600;
+  text-transform:uppercase;letter-spacing:.06em;
+  margin-bottom:20px;
 }
-.sidebar-logo .app-sub{
-  font-size:10px;
-  color:var(--text3);
-  font-weight:500;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-  margin-top:2px;
+.auth-hero-tag::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--blue)}
+.auth-hero h1{
+  font-size:28px;font-weight:800;
+  color:#fff;line-height:1.2;
+  letter-spacing:-.5px;margin-bottom:14px;
 }
-.sidebar-nav{
-  flex:1;
-  padding:12px 0;
-  overflow-y:auto;
-}
-.nav-label{
-  font-size:10px;
-  font-weight:600;
-  color:var(--text3);
-  text-transform:uppercase;
-  letter-spacing:.08em;
-  padding:12px 16px 4px;
-}
-.nav-item{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:9px 16px;
-  margin:1px 8px;
-  border-radius:var(--r);
-  cursor:pointer;
-  font-size:13px;
-  font-weight:500;
-  color:var(--text2);
-  transition:background .15s,color .15s;
-  border-left:3px solid transparent;
-  user-select:none;
-}
-.nav-item:hover{background:var(--bg3);color:var(--text)}
-.nav-item.active{
-  background:var(--accent-bg);
-  color:var(--accent);
-  border-left-color:var(--accent);
-  border-radius:0 var(--r) var(--r) 0;
-  margin-left:0;
-  padding-left:13px;
-}
-.nav-item .material-symbols-outlined{font-size:20px}
-.sidebar-bottom{
-  padding:12px 16px;
-  border-top:1px solid var(--border);
-}
-.theme-toggle{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:8px 0;
-}
-.theme-toggle span{font-size:12px;color:var(--text2);font-weight:500}
-.toggle-switch{
-  width:40px;height:22px;
-  background:var(--bg4);
-  border-radius:11px;
-  position:relative;
-  cursor:pointer;
-  transition:background .2s;
-}
-.toggle-switch.on{background:var(--accent)}
-.toggle-switch::after{
-  content:'';
-  position:absolute;
-  width:16px;height:16px;
-  background:#fff;
-  border-radius:50%;
-  top:3px;left:3px;
-  transition:left .2s;
-}
-.toggle-switch.on::after{left:21px}
-.sidebar-user{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-top:10px;
-  padding-top:10px;
-  border-top:1px solid var(--border);
-}
-.user-avatar{
-  width:32px;height:32px;
-  border-radius:50%;
-  background:var(--accent-bg);
+.auth-hero p{font-size:13px;color:rgba(255,255,255,.4);line-height:1.65}
+.auth-features{margin-top:28px;display:flex;flex-direction:column;gap:10px}
+.auth-feat{display:flex;align-items:center;gap:10px;font-size:12px;color:rgba(255,255,255,.5)}
+.auth-feat-check{
+  width:18px;height:18px;flex-shrink:0;border-radius:50%;
+  background:rgba(22,163,74,.2);border:1px solid rgba(22,163,74,.3);
   display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:700;color:var(--accent);
-  flex-shrink:0;
+  font-size:11px;color:#4ade80;
 }
-.user-info .user-name{font-size:12px;font-weight:600;color:var(--text)}
-.user-info .user-role{font-size:10px;color:var(--text3)}
-.btn-logout{
-  margin-left:auto;
-  padding:4px;
-  border-radius:6px;
-  color:var(--text3);
-  transition:color .15s,background .15s;
+.auth-panel-right{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  padding:40px 48px;background:var(--canvas);
 }
-.btn-logout:hover{color:var(--red);background:var(--red-bg)}
-.btn-logout .material-symbols-outlined{font-size:18px}
-
-/* ===========================
-   MAIN AREA
-=========================== */
-.main-area{
-  margin-left:var(--sidebar-w);
-  flex:1;
+.auth-box{width:100%;max-width:380px}
+.auth-tabs{
   display:flex;
-  flex-direction:column;
-  height:100vh;
-  overflow:hidden;
-}
-.topbar{
-  background:var(--bg2);
-  border-bottom:1px solid var(--border);
-  padding:0 24px;
-  height:60px;
-  display:flex;
-  align-items:center;
-  gap:16px;
-  flex-shrink:0;
-}
-.topbar-title{
-  font-family:'Manrope',sans-serif;
-  font-weight:700;
-  font-size:18px;
-  color:var(--text);
-  flex:1;
-}
-.search-box{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  background:var(--bg3);
-  border:1px solid var(--border);
-  border-radius:var(--r);
-  padding:6px 12px;
-  width:260px;
-}
-.search-box .material-symbols-outlined{font-size:18px;color:var(--text3)}
-.search-box input{
-  background:none;
-  border:none;
-  outline:none;
-  font-size:13px;
-  color:var(--text);
-  width:100%;
-}
-.search-box input::placeholder{color:var(--text3)}
-.page-content{
-  flex:1;
-  overflow-y:auto;
-  padding:24px;
-}
-
-/* ===========================
-   BUTTONS
-=========================== */
-.btn-p{
-  background:var(--accent);
-  color:#fff;
-  border-radius:var(--r);
-  padding:8px 16px;
-  font-family:'Inter',sans-serif;
-  font-weight:600;
-  font-size:13px;
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  transition:filter .15s,transform .1s;
-  white-space:nowrap;
-}
-.btn-p:hover{filter:brightness(1.1);transform:translateY(-1px)}
-.btn-p .material-symbols-outlined{font-size:18px}
-.btn-s{
-  background:var(--bg3);
-  color:var(--text2);
-  border-radius:var(--r);
-  padding:8px 14px;
-  font-weight:600;
-  font-size:13px;
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  border:1px solid var(--border);
-  transition:background .15s;
-  white-space:nowrap;
-}
-.btn-s:hover{background:var(--bg4)}
-.btn-danger{background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,.2)}
-.btn-danger:hover{background:var(--red);color:#fff}
-.btn-icon{
-  padding:6px;
-  border-radius:6px;
-  color:var(--text3);
-  display:inline-flex;
-  align-items:center;
-  transition:background .15s,color .15s;
-}
-.btn-icon:hover{background:var(--bg3);color:var(--text)}
-.btn-icon .material-symbols-outlined{font-size:18px}
-
-/* ===========================
-   CARDS / KPI
-=========================== */
-.kpi-grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:16px;
-  margin-bottom:24px;
-}
-.kpi-card{
-  background:var(--bg2);
-  border:1px solid var(--border);
-  border-radius:var(--r2);
-  padding:20px;
-  transition:box-shadow .2s;
-}
-.kpi-card:hover{box-shadow:var(--shadow2)}
-.kpi-label{
-  font-size:11px;
-  font-weight:600;
-  text-transform:uppercase;
-  letter-spacing:.08em;
-  color:var(--text3);
-  margin-bottom:8px;
-}
-.kpi-value{
-  font-family:'Manrope',sans-serif;
-  font-weight:800;
-  font-size:32px;
-  color:var(--text);
-  line-height:1;
-}
-.kpi-value.verde{color:var(--green)}
-.kpi-value.arancio{color:var(--orange)}
-.kpi-value.rosso{color:var(--red)}
-.kpi-sub{font-size:11px;color:var(--text3);margin-top:4px}
-
-/* ===========================
-   BADGE / SEMAFORO
-=========================== */
-.badge{
-  display:inline-flex;
-  align-items:center;
-  gap:4px;
-  padding:3px 8px;
-  border-radius:20px;
-  font-size:11px;
-  font-weight:600;
-  white-space:nowrap;
-}
-.badge-verde{background:var(--green-bg);color:var(--green)}
-.badge-arancio{background:var(--orange-bg);color:var(--orange)}
-.badge-rosso{background:var(--red-bg);color:var(--red)}
-.badge-gray{background:var(--bg3);color:var(--text3)}
-.badge-accent{background:var(--accent-bg);color:var(--accent)}
-.badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
-
-/* ===========================
-   TABLE
-=========================== */
-.table-wrap{
-  background:var(--bg2);
-  border:1px solid var(--border);
-  border-radius:var(--r2);
-  overflow:hidden;
-}
-.table-filters{
-  padding:16px;
-  border-bottom:1px solid var(--border);
-  display:flex;
-  gap:12px;
-  align-items:center;
-  flex-wrap:wrap;
-}
-table{width:100%;border-collapse:collapse}
-thead tr{background:var(--bg3)}
-th{
-  font-size:10px;
-  font-weight:600;
-  text-transform:uppercase;
-  letter-spacing:.08em;
-  color:var(--text3);
-  padding:10px 16px;
-  text-align:left;
-  white-space:nowrap;
-}
-td{
-  padding:12px 16px;
-  border-bottom:1px solid var(--border);
-  vertical-align:middle;
-  font-size:13px;
-  color:var(--text2);
-}
-tr:last-child td{border-bottom:none}
-tbody tr{transition:background .1s;cursor:pointer}
-tbody tr:hover{background:var(--bg3)}
-.td-name{color:var(--text);font-weight:600;font-size:13px}
-.td-code{font-family:monospace;font-size:12px;color:var(--text3)}
-.td-actions{display:flex;align-items:center;gap:4px}
-.adempimenti-count{
-  font-size:12px;
-  font-weight:600;
-  color:var(--text2);
-}
-.adempimenti-count span{color:var(--accent);font-size:13px;font-weight:700}
-
-/* ===========================
-   CHECKBOX toggle
-=========================== */
-.check-toggle{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  cursor:pointer;
-  user-select:none;
-}
-.check-toggle input[type=checkbox]{
-  width:18px;height:18px;
-  cursor:pointer;
-  accent-color:var(--accent);
-}
-
-/* ===========================
-   ADEMPIMENTO CARD (Scheda CR)
-=========================== */
-.adem-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
-  gap:14px;
-  margin-top:16px;
-}
-.adem-card{
-  background:var(--bg2);
-  border:2px solid var(--border);
-  border-radius:var(--r2);
-  padding:16px;
-  transition:border-color .2s,background .2s;
-  position:relative;
-}
-.adem-card.completato{
-  border-color:var(--green);
-  background:var(--green-bg);
-}
-.adem-card.facoltativo-nc{
-  border-color:var(--border2);
-  opacity:.85;
-}
-.adem-card-header{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:8px;
-  margin-bottom:12px;
-}
-.adem-title{
-  font-size:13px;
-  font-weight:600;
-  color:var(--text);
-  line-height:1.3;
-}
-.adem-badge-fac{
-  font-size:9px;
-  font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-  color:var(--text3);
-  background:var(--bg4);
-  padding:2px 6px;
-  border-radius:10px;
-  white-space:nowrap;
-}
-.adem-toggle-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-}
-.big-toggle{
-  position:relative;
-  width:52px;height:28px;
-  flex-shrink:0;
-}
-.big-toggle input{opacity:0;width:0;height:0;position:absolute}
-.big-toggle-slider{
-  position:absolute;
-  inset:0;
-  background:var(--bg4);
-  border-radius:14px;
-  cursor:pointer;
-  transition:background .2s;
-}
-.big-toggle-slider::after{
-  content:'';
-  position:absolute;
-  width:20px;height:20px;
-  background:#fff;
-  border-radius:50%;
-  top:4px;left:4px;
-  transition:left .2s;
-  box-shadow:0 1px 4px rgba(0,0,0,.2);
-}
-.big-toggle input:checked + .big-toggle-slider{background:var(--green)}
-.big-toggle input:checked + .big-toggle-slider::after{left:28px}
-.adem-status-text{
-  font-size:11px;
-  font-weight:600;
-  color:var(--text3);
-}
-.completato .adem-status-text{color:var(--green)}
-.adem-date-row{
-  margin-top:10px;
-  display:none;
-}
-.adem-date-row.visible{display:block}
-.adem-date-row label{
-  font-size:10px;
-  font-weight:600;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-  color:var(--text3);
-  display:block;
-  margin-bottom:4px;
-}
-.adem-date-row input[type=date]{
-  width:100%;
-  padding:6px 10px;
+  background:var(--surface);
   border:1px solid var(--border2);
-  border-radius:var(--r);
-  background:var(--bg);
-  color:var(--text);
-  font-size:12px;
-  outline:none;
-  transition:border-color .15s;
-}
-.adem-date-row input[type=date]:focus{border-color:var(--accent)}
-.info-btn{
-  position:absolute;
-  top:14px;right:14px;
-  color:var(--text3);
-  cursor:help;
-  font-size:16px;
-  display:flex;
-  align-items:center;
-}
-
-/* ===========================
-   TOOLTIP
-=========================== */
-.tooltip-box{
-  position:fixed;
-  background:var(--text);
-  color:var(--bg2);
-  font-size:11px;
-  font-weight:400;
-  padding:8px 12px;
-  border-radius:var(--r);
-  max-width:240px;
-  line-height:1.5;
-  z-index:9999;
-  pointer-events:none;
-  opacity:0;
-  transition:opacity .15s;
-  box-shadow:var(--shadow2);
-}
-.tooltip-box.visible{opacity:1}
-
-/* ===========================
-   MODAL
-=========================== */
-.modal-overlay{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.55);
-  z-index:500;
-  display:none;
-  align-items:flex-start;
-  justify-content:center;
-  padding:24px;
-  overflow-y:auto;
-}
-.modal-overlay.open{display:flex}
-.modal-box{
-  background:var(--bg2);
-  border-radius:16px;
-  width:100%;
-  max-width:700px;
-  margin:auto;
-  display:flex;
-  flex-direction:column;
-  max-height:calc(100vh - 48px);
-  box-shadow:var(--shadow2);
-}
-.modal-box.wide{max-width:900px}
-.modal-header{
-  padding:20px 24px;
-  border-bottom:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  gap:12px;
-  flex-shrink:0;
-}
-.modal-title{
-  font-family:'Manrope',sans-serif;
-  font-weight:700;
-  font-size:18px;
-  color:var(--text);
-  flex:1;
-}
-.modal-body{
-  flex:1;
-  overflow-y:auto;
-  padding:24px;
-}
-.modal-footer{
-  padding:16px 24px;
-  border-top:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  justify-content:flex-end;
-  gap:10px;
-  flex-shrink:0;
-}
-
-/* ===========================
-   FORM ELEMENTS
-=========================== */
-.form-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:16px;
-}
-.form-group{display:flex;flex-direction:column;gap:4px}
-.form-group.full{grid-column:1/-1}
-.form-group label{
-  font-size:11px;
-  font-weight:600;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-  color:var(--text3);
-}
-.form-group input,
-.form-group select,
-.form-group textarea{
-  padding:8px 12px;
-  border:1px solid var(--border2);
-  border-radius:var(--r);
-  background:var(--bg);
-  color:var(--text);
-  outline:none;
-  transition:border-color .15s;
-}
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus{border-color:var(--accent)}
-.form-group textarea{resize:vertical;min-height:80px}
-.form-group select{cursor:pointer}
-
-/* ===========================
-   FILTER BAR
-=========================== */
-.filter-bar{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  flex-wrap:wrap;
-}
-.filter-select{
-  padding:7px 12px;
-  border:1px solid var(--border);
-  border-radius:var(--r);
-  background:var(--bg);
-  color:var(--text);
-  font-size:13px;
-  outline:none;
-  cursor:pointer;
-  transition:border-color .15s;
-}
-.filter-select:focus{border-color:var(--accent)}
-
-/* ===========================
-   CHART SECTION
-=========================== */
-.section-card{
-  background:var(--bg2);
-  border:1px solid var(--border);
   border-radius:var(--r2);
-  padding:20px;
-  margin-bottom:20px;
+  padding:4px;gap:4px;
+  margin-bottom:28px;
 }
-.section-title{
-  font-family:'Manrope',sans-serif;
-  font-weight:700;
-  font-size:15px;
-  color:var(--text);
-  margin-bottom:16px;
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-.section-title .material-symbols-outlined{font-size:20px;color:var(--accent)}
-
-/* ===========================
-   SCADENZA BANNER
-=========================== */
-.scadenza-banner{
-  background:linear-gradient(135deg,rgba(var(--accent-rgb),.12),rgba(var(--accent-rgb),.06));
-  border:1px solid rgba(var(--accent-rgb),.3);
-  border-radius:var(--r2);
-  padding:14px 20px;
-  margin-bottom:20px;
-  display:flex;
-  align-items:center;
-  gap:14px;
-}
-.scadenza-banner .material-symbols-outlined{font-size:22px;color:var(--accent)}
-.scadenza-banner .sb-title{font-weight:700;color:var(--text);font-size:14px}
-.scadenza-banner .sb-sub{font-size:12px;color:var(--text2);margin-top:2px}
-.scadenza-count{
-  margin-left:auto;
-  font-family:'Manrope',sans-serif;
-  font-weight:800;
-  font-size:28px;
-  color:var(--accent);
-}
-.scadenza-count span{font-size:12px;font-weight:500;color:var(--text3)}
-
-/* ===========================
-   TOAST
-=========================== */
-#toast-container{
-  position:fixed;
-  bottom:24px;
-  right:24px;
-  z-index:9999;
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  pointer-events:none;
-}
-.toast{
-  background:var(--text);
-  color:var(--bg2);
-  padding:10px 16px;
-  border-radius:var(--r);
-  font-size:13px;
-  font-weight:500;
-  box-shadow:var(--shadow2);
-  display:flex;
-  align-items:center;
-  gap:8px;
-  animation:toastIn .25s ease;
-  pointer-events:auto;
-}
-.toast.err{background:var(--red)}
-.toast.info{background:var(--accent)}
-.toast .material-symbols-outlined{font-size:18px}
-@keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-
-/* ===========================
-   SPINNER
-=========================== */
-.spinner{
-  display:inline-block;
-  width:16px;height:16px;
-  border:2px solid var(--border);
-  border-top-color:var(--accent);
-  border-radius:50%;
-  animation:spin .6s linear infinite;
-  vertical-align:middle;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* ===========================
-   SCHEDA CR - specifici
-=========================== */
-.cr-header-box{
-  background:linear-gradient(135deg,var(--accent-bg),var(--bg3));
-  border:1px solid rgba(var(--accent-rgb),.2);
-  border-radius:var(--r2);
-  padding:20px;
-  margin-bottom:20px;
-  display:flex;
-  align-items:center;
-  gap:16px;
-}
-.cr-avatar-big{
-  width:52px;height:52px;
-  border-radius:50%;
-  background:var(--accent);
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Manrope',sans-serif;
-  font-weight:800;
-  font-size:20px;
-  color:#fff;
-  flex-shrink:0;
-}
-.cr-head-name{
-  font-family:'Manrope',sans-serif;
-  font-weight:800;
-  font-size:22px;
-  color:var(--text);
-}
-.cr-head-num{font-size:12px;color:var(--text3);margin-top:2px;font-weight:500}
-.cr-head-actions{margin-left:auto;display:flex;gap:8px}
-.section-collapsible{margin-bottom:16px}
-.section-collapsible-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:12px 16px;
-  background:var(--bg3);
-  border-radius:var(--r);
-  cursor:pointer;
-  font-weight:600;
-  font-size:13px;
-  color:var(--text);
-  transition:background .15s;
-  user-select:none;
-}
-.section-collapsible-header:hover{background:var(--bg4)}
-.section-collapsible-body{padding:16px 0;display:none}
-.section-collapsible-body.open{display:block}
-.log-item{
-  display:flex;
-  gap:12px;
-  padding:10px 0;
-  border-bottom:1px solid var(--border);
-  font-size:12px;
-}
-.log-item:last-child{border-bottom:none}
-.log-icon{color:var(--accent);font-size:18px;flex-shrink:0}
-.log-time{color:var(--text3);white-space:nowrap;font-size:11px}
-.log-azione{color:var(--text);font-weight:600}
-.log-dettaglio{color:var(--text2)}
-.empty-state{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  padding:48px 24px;
-  color:var(--text3);
-  gap:12px;
-}
-.empty-state .material-symbols-outlined{font-size:48px;opacity:.4}
-.empty-state p{font-size:13px;text-align:center}
-.anno-tabs{
-  display:flex;
-  gap:6px;
-  margin-bottom:16px;
-}
-.anno-tab{
-  padding:6px 14px;
-  border-radius:20px;
-  font-size:12px;
-  font-weight:600;
-  color:var(--text3);
-  background:var(--bg3);
-  cursor:pointer;
-  transition:all .15s;
-}
-.anno-tab.active{background:var(--accent);color:#fff}
-
-/* ===========================
-   IMPORT PAGE
-=========================== */
-.tab-bar{
-  display:flex;
-  border-bottom:2px solid var(--border);
-  margin-bottom:24px;
-  gap:4px;
-}
-.tab-btn{
-  padding:10px 20px;
-  font-size:13px;
-  font-weight:600;
-  color:var(--text3);
-  border-bottom:2px solid transparent;
-  margin-bottom:-2px;
-  cursor:pointer;
-  transition:color .15s,border-color .15s;
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
-.tab-btn .material-symbols-outlined{font-size:18px}
-.tab-content{display:none}
-.tab-content.active{display:block}
-.dropzone{
-  border:2px dashed var(--border2);
-  border-radius:var(--r2);
-  padding:40px 24px;
+.auth-tab{
+  flex:1;padding:8px;border-radius:8px;
+  font-size:13px;font-weight:600;
+  color:var(--text2);cursor:pointer;
+  transition:background .15s,color .15s;
   text-align:center;
-  cursor:pointer;
-  transition:border-color .2s,background .2s;
 }
-.dropzone:hover,.dropzone.drag-over{
-  border-color:var(--accent);
-  background:var(--accent-bg);
+.auth-tab.active{background:var(--blue);color:#fff}
+.auth-form-title{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.4px;margin-bottom:6px}
+.auth-form-sub{font-size:13px;color:var(--text2);margin-bottom:24px}
+.auth-form{display:flex;flex-direction:column;gap:14px}
+.form-field{}
+.form-field label{
+  display:block;font-size:11px;font-weight:700;
+  color:var(--text2);text-transform:uppercase;letter-spacing:.07em;
+  margin-bottom:6px;
 }
-.dropzone .material-symbols-outlined{font-size:40px;color:var(--text3);margin-bottom:12px}
-.dropzone p{font-size:13px;color:var(--text3)}
-.dropzone strong{color:var(--accent)}
-.preview-table-wrap{
-  margin-top:16px;
-  border:1px solid var(--border);
-  border-radius:var(--r);
-  overflow:auto;
-  max-height:300px;
-}
-
-/* ===========================
-   SETTINGS
-=========================== */
-.settings-section{
-  background:var(--bg2);
-  border:1px solid var(--border);
-  border-radius:var(--r2);
-  padding:20px;
-  margin-bottom:16px;
-}
-.settings-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:10px 0;
-  border-bottom:1px solid var(--border);
-}
-.settings-row:last-child{border-bottom:none}
-.settings-row-label{font-size:13px;font-weight:500;color:var(--text)}
-.settings-row-sub{font-size:11px;color:var(--text3);margin-top:2px}
-
-/* ===========================
-   LOGIN SCREEN
-=========================== */
-.login-card{
-  background:var(--bg2);
-  border:1px solid var(--border);
-  border-radius:20px;
-  padding:40px;
-  width:100%;
-  max-width:400px;
-  box-shadow:var(--shadow2);
-}
-.login-logo{
-  text-align:center;
-  margin-bottom:32px;
-}
-.login-logo .app-icon{
-  width:52px;height:52px;
-  background:var(--accent);
-  border-radius:16px;
-  display:flex;align-items:center;justify-content:center;
-  margin:0 auto 12px;
-}
-.login-logo .app-icon .material-symbols-outlined{font-size:28px;color:#fff}
-.login-logo h1{
-  font-family:'Manrope',sans-serif;
-  font-weight:800;
-  font-size:22px;
-  color:var(--text);
-}
-.login-logo p{font-size:13px;color:var(--text3);margin-top:4px}
-.login-form{display:flex;flex-direction:column;gap:14px}
-.login-form label{
-  font-size:11px;
-  font-weight:600;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-  color:var(--text3);
-  display:block;
-  margin-bottom:4px;
-}
-.login-form input{
-  width:100%;
-  padding:10px 14px;
+.form-field input{
+  width:100%;padding:10px 13px;
   border:1.5px solid var(--border2);
   border-radius:var(--r);
-  background:var(--bg);
-  color:var(--text);
-  outline:none;
-  font-size:14px;
+  background:var(--surface);color:var(--text);
+  font-size:14px;font-weight:500;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.form-field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+.auth-submit{
+  width:100%;padding:11px;margin-top:4px;
+  background:var(--blue);color:#fff;
+  border-radius:var(--r);font-size:14px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:filter .15s,transform .1s,box-shadow .15s;
+}
+.auth-submit:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 6px 18px rgba(59,130,246,.3)}
+.auth-submit:active{transform:translateY(0)}
+.auth-submit .material-symbols-outlined{font-size:18px}
+.auth-err{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);border-radius:var(--r);padding:10px 13px;font-size:12px;font-weight:600;display:none}
+.auth-err.show{display:block}
+.auth-ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);border-radius:var(--r);padding:10px 13px;font-size:12px;font-weight:600;display:none}
+.auth-ok.show{display:block}
+.auth-form-panel{display:none}
+.auth-form-panel.active{display:flex;flex-direction:column}
+
+/* ── APP LAYOUT ───────────── */
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ──────────────── */
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;
+  background:var(--sidebar);
+  display:flex;flex-direction:column;
+  height:100vh;
+}
+.sb-header{
+  padding:18px 16px 14px;
+  border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;gap:10px;
+}
+.sb-logo-mark{
+  width:28px;height:28px;border-radius:8px;
+  background:var(--blue);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.sb-logo-mark .material-symbols-outlined{font-size:17px;color:#fff}
+.sb-app-name{font-size:14px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.sb-app-sub{font-size:10px;color:rgba(255,255,255,.3);font-weight:400;margin-top:1px}
+
+.sb-nav{flex:1;padding:10px 10px;overflow-y:auto}
+.sb-group-label{
+  font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;color:rgba(255,255,255,.22);
+  padding:10px 8px 4px;
+}
+.sb-item{
+  display:flex;align-items:center;gap:9px;
+  padding:8px 10px;border-radius:8px;
+  cursor:pointer;font-size:13px;font-weight:500;
+  color:rgba(255,255,255,.42);
+  transition:background .12s,color .12s;
+  user-select:none;margin:1px 0;position:relative;
+}
+.sb-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.75)}
+.sb-item.active{background:rgba(59,130,246,.18);color:#fff}
+.sb-item.active::before{
+  content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:2.5px;height:18px;background:var(--blue);border-radius:0 2px 2px 0;
+}
+.sb-item .material-symbols-outlined{font-size:18px;flex-shrink:0}
+.sb-badge{
+  margin-left:auto;
+  background:rgba(59,130,246,.2);color:rgba(255,255,255,.7);
+  font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;
+}
+
+.sb-footer{
+  padding:10px 10px 14px;
+  border-top:1px solid rgba(255,255,255,.07);
+}
+.sb-theme{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 8px;
+}
+.sb-theme span{font-size:11px;color:rgba(255,255,255,.35);font-weight:500}
+.sw{
+  width:36px;height:19px;
+  background:rgba(255,255,255,.1);
+  border-radius:10px;position:relative;cursor:pointer;transition:background .2s;
+}
+.sw.on{background:var(--blue)}
+.sw::after{
+  content:'';position:absolute;
+  width:13px;height:13px;background:#fff;
+  border-radius:50%;top:3px;left:3px;
+  transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3);
+}
+.sw.on::after{left:20px}
+.sb-user{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 8px 4px;margin-top:4px;
+}
+.sb-av{
+  width:28px;height:28px;border-radius:50%;
+  background:rgba(59,130,246,.25);border:1.5px solid rgba(59,130,246,.4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:rgba(255,255,255,.85);flex-shrink:0;
+}
+.sb-uname{font-size:12px;font-weight:600;color:rgba(255,255,255,.7)}
+.sb-urole{font-size:10px;color:rgba(255,255,255,.28)}
+.sb-logout{
+  margin-left:auto;color:rgba(255,255,255,.2);padding:4px;
+  border-radius:6px;display:flex;transition:color .12s,background .12s;
+}
+.sb-logout:hover{color:var(--red);background:rgba(220,38,38,.1)}
+.sb-logout .material-symbols-outlined{font-size:16px}
+
+/* ── MAIN AREA ────────────── */
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:0 22px;height:56px;
+  display:flex;align-items:center;gap:12px;flex-shrink:0;
+}
+.tb-title{font-size:16px;font-weight:700;color:var(--text);letter-spacing:-.2px;flex:1}
+.tb-anno{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:20px;padding:3px 10px;
+  font-size:11px;font-weight:700;color:var(--text2);
+}
+.search-field{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:var(--r);padding:6px 11px;width:230px;
   transition:border-color .15s;
 }
-.login-form input:focus{border-color:var(--accent)}
-.login-form .btn-p{width:100%;justify-content:center;padding:11px}
-.login-err{
-  background:var(--red-bg);
-  color:var(--red);
-  font-size:12px;
-  font-weight:500;
-  padding:8px 12px;
-  border-radius:var(--r);
-  display:none;
-}
-.login-err.visible{display:block}
+.search-field:focus-within{border-color:var(--blue)}
+.search-field .material-symbols-outlined{font-size:17px;color:var(--text3)}
+.search-field input{background:none;border:none;outline:none;font-size:13px;color:var(--text);width:100%;font-weight:500}
+.search-field input::placeholder{color:var(--text3)}
+.page-content{flex:1;overflow-y:auto;padding:22px}
 
-/* ===========================
-   MISSING TAGS / TAGS
-=========================== */
-.manca-tag{
-  display:inline-flex;
-  align-items:center;
-  gap:3px;
-  padding:2px 7px;
-  background:var(--orange-bg);
-  color:var(--orange);
-  border-radius:20px;
-  font-size:10px;
-  font-weight:600;
-  margin:2px;
+/* ── BUTTONS ──────────────── */
+.btn-blue{
+  background:var(--blue);color:#fff;
+  border-radius:var(--r);padding:8px 16px;
+  font-weight:700;font-size:13px;
+  display:inline-flex;align-items:center;gap:6px;
+  transition:filter .15s,transform .1s,box-shadow .15s;white-space:nowrap;
 }
-.manca-tag.rosso{background:var(--red-bg);color:var(--red)}
+.btn-blue:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 4px 14px rgba(59,130,246,.3)}
+.btn-blue .material-symbols-outlined{font-size:17px}
+.btn-ghost{
+  background:var(--surface);color:var(--text2);
+  border:1px solid var(--border2);border-radius:var(--r);
+  padding:8px 14px;font-weight:600;font-size:13px;
+  display:inline-flex;align-items:center;gap:6px;
+  transition:background .12s;white-space:nowrap;
+}
+.btn-ghost:hover{background:var(--surface2)}
+.btn-ghost .material-symbols-outlined{font-size:17px}
+.btn-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.btn-danger:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-icon{
+  padding:6px;border-radius:8px;
+  color:var(--text3);display:inline-flex;
+  transition:background .12s,color .12s;
+}
+.btn-icon:hover{background:var(--surface2);color:var(--text)}
+.btn-icon .material-symbols-outlined{font-size:17px}
 
-/* ===========================
-   RESPONSIVE / MOBILE
-=========================== */
-@media(max-width:768px){
-  :root{--sidebar-w:0px}
-  .sidebar{transform:translateX(-240px);width:240px}
-  .sidebar.open{transform:translateX(0)}
-  .main-area{margin-left:0}
-  .kpi-grid{grid-template-columns:1fr 1fr}
-  .mobile-menu-btn{display:flex!important}
-  .topbar-title{font-size:15px}
-  .page-content{padding:16px}
-  .adem-grid{grid-template-columns:1fr}
-  .form-grid{grid-template-columns:1fr}
+/* ── KPI CARDS ────────────── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.kpi-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r2);padding:18px 18px 14px;
+  box-shadow:var(--sh-sm);
+  transition:box-shadow .2s,transform .2s;
+  position:relative;overflow:hidden;
 }
-.mobile-menu-btn{
-  display:none;
-  align-items:center;
-  padding:6px;
-  border-radius:var(--r);
-  color:var(--text2);
+.kpi-card:hover{box-shadow:var(--sh-md);transform:translateY(-2px)}
+.kpi-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.kpi-icon-wrap{
+  width:36px;height:36px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
 }
-.mobile-overlay{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.4);
-  z-index:99;
-  display:none;
+.kpi-icon-wrap .material-symbols-outlined{font-size:19px}
+.ki-blue{background:var(--blue-bg)} .ki-blue .material-symbols-outlined{color:var(--blue)}
+.ki-green{background:var(--green-bg)} .ki-green .material-symbols-outlined{color:var(--green)}
+.ki-orange{background:var(--orange-bg)} .ki-orange .material-symbols-outlined{color:var(--orange)}
+.ki-red{background:var(--red-bg)} .ki-red .material-symbols-outlined{color:var(--red)}
+.kpi-trend{
+  font-size:11px;font-weight:700;
+  display:flex;align-items:center;gap:2px;
+  padding:3px 7px;border-radius:20px;
 }
-.mobile-overlay.open{display:block}
+.trend-up{background:var(--green-bg);color:var(--green)}
+.trend-down{background:var(--red-bg);color:var(--red)}
+.trend-neu{background:var(--surface2);color:var(--text3)}
+.kpi-value{
+  font-size:28px;font-weight:800;
+  color:var(--text);letter-spacing:-.5px;line-height:1;
+  margin-bottom:4px;
+}
+.kpi-label{font-size:12px;font-weight:600;color:var(--text2)}
+.kpi-meta{font-size:11px;color:var(--text3);margin-top:3px}
+.kpi-bar{
+  position:absolute;bottom:0;left:0;right:0;height:2.5px;
+}
+.kpi-bar.blue{background:linear-gradient(90deg,var(--blue) 0%,transparent 100%)}
+.kpi-bar.green{background:linear-gradient(90deg,var(--green) 0%,transparent 100%)}
+.kpi-bar.orange{background:linear-gradient(90deg,var(--orange) 0%,transparent 100%)}
+.kpi-bar.red{background:linear-gradient(90deg,var(--red) 0%,transparent 100%)}
 
-/* ===========================
-   IMPORT PROGRESS
-=========================== */
-.import-row{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:8px 12px;
-  border-radius:var(--r);
-  font-size:12px;
-  margin:4px 0;
-}
-.import-row.ok{background:var(--green-bg);color:var(--green)}
-.import-row.skip{background:var(--bg3);color:var(--text3)}
-.import-row.err{background:var(--red-bg);color:var(--red)}
-.import-row .material-symbols-outlined{font-size:16px}
+/* ── INSIGHT ROW ──────────── */
+.insight-row{display:grid;grid-template-columns:1fr 300px;gap:14px;margin-bottom:18px}
 
-/* === BULK ACTIONS === */
-.bulk-bar{
-  display:none;
-  align-items:center;
-  gap:12px;
-  padding:10px 16px;
-  background:var(--accent-bg);
-  border-bottom:1px solid rgba(var(--accent-rgb),.2);
-  font-size:13px;
-}
-.bulk-bar.visible{display:flex}
-.bulk-count{font-weight:700;color:var(--accent)}
-
-/* === REPORT === */
-.report-card{
-  background:var(--bg2);
+/* ── CARD ─────────────────── */
+.card{
+  background:var(--surface);
   border:1px solid var(--border);
   border-radius:var(--r2);
-  padding:24px;
-  margin-bottom:16px;
-  display:flex;
-  align-items:center;
-  gap:16px;
+  box-shadow:var(--sh-sm);
+  overflow:hidden;
 }
-.report-card .material-symbols-outlined{font-size:32px;color:var(--accent)}
-.report-card-info{flex:1}
-.report-card-title{font-weight:700;font-size:15px;color:var(--text)}
-.report-card-sub{font-size:12px;color:var(--text3);margin-top:4px}
+.card-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:15px 18px;
+  border-bottom:1px solid var(--border);
+}
+.card-title{
+  font-size:14px;font-weight:700;color:var(--text);
+  display:flex;align-items:center;gap:7px;
+}
+.card-title .material-symbols-outlined{font-size:17px;color:var(--blue)}
+.card-body{padding:18px}
+
+/* ── BADGE ────────────────── */
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:20px;
+  font-size:11px;font-weight:700;white-space:nowrap;
+}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0}
+.b-green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.b-orange{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-border)}
+.b-red{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.b-blue{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+.b-gray{background:var(--surface2);color:var(--text2);border:1px solid var(--border2)}
+
+/* ── GAUGE WIDGET ─────────── */
+.gauge-wrap{position:relative;display:flex;justify-content:center;align-items:center;padding:16px 0 10px}
+.gauge-center{position:absolute;text-align:center}
+.gauge-pct{font-size:26px;font-weight:800;color:var(--text);letter-spacing:-.5px}
+.gauge-lbl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:1px}
+.gauge-legend{display:flex;flex-direction:column;gap:8px;padding:0 18px 14px}
+.gauge-leg-item{display:flex;align-items:center;justify-content:space-between;font-size:12px}
+.gauge-leg-left{display:flex;align-items:center;gap:8px;color:var(--text2)}
+.gauge-leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.gauge-leg-val{font-weight:700;color:var(--text)}
+
+/* ── TABLE ────────────────── */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);box-shadow:var(--sh-sm);overflow:hidden;margin-bottom:18px}
+.table-toolbar{
+  padding:13px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.table-title{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:7px}
+.table-title .material-symbols-outlined{font-size:17px;color:var(--blue)}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--surface2)}
+th{
+  font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.09em;color:var(--text3);
+  padding:10px 16px;text-align:left;
+  border-bottom:1px solid var(--border);white-space:nowrap;
+}
+td{
+  padding:13px 16px;border-bottom:1px solid var(--border);
+  font-size:13px;color:var(--text2);vertical-align:middle;
+}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background .08s;cursor:pointer}
+tbody tr:hover{background:var(--surface2)}
+.td-name{color:var(--text);font-weight:600;font-size:13px}
+.td-mono{font-family:'Courier New',monospace;font-size:11px;color:var(--text3)}
+
+/* ── PROGRESS MINI ──────── */
+.prog-wrap{display:flex;align-items:center;gap:8px}
+.prog-bar{height:5px;border-radius:3px;background:var(--surface2);flex:1;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width .3s}
+.prog-fill.green{background:var(--green)}
+.prog-fill.orange{background:var(--orange)}
+.prog-fill.red{background:var(--red)}
+.prog-text{font-size:11px;font-weight:700;white-space:nowrap}
+
+/* ── FILTER SELECT ─────── */
+.fsel{
+  padding:7px 12px;
+  border:1px solid var(--border2);border-radius:var(--r);
+  background:var(--surface);color:var(--text);
+  font-size:13px;font-weight:500;outline:none;cursor:pointer;
+}
+.fsel:focus{border-color:var(--blue)}
+
+/* ── MANCA TAGS ──────────── */
+.manca{
+  display:inline-block;padding:2px 7px;
+  background:var(--orange-bg);color:var(--orange);
+  border-radius:12px;font-size:10px;font-weight:700;
+  margin:1px 2px 1px 0;border:1px solid var(--orange-border);
+}
+.manca.red{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+
+/* ── SCADENZA BANNER ──── */
+.scad-banner{
+  background:var(--surface);
+  border:1px solid var(--blue-border);
+  border-left:3px solid var(--blue);
+  border-radius:var(--r2);padding:14px 18px;
+  margin-bottom:18px;
+  display:flex;align-items:center;gap:14px;
+  box-shadow:var(--sh-sm);
+}
+.scad-banner .material-symbols-outlined{font-size:22px;color:var(--blue)}
+.scad-title{font-size:14px;font-weight:700;color:var(--text)}
+.scad-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.scad-days{
+  margin-left:auto;
+  font-size:26px;font-weight:800;color:var(--blue);
+  letter-spacing:-.4px;line-height:1;
+}
+.scad-days span{font-size:11px;font-weight:600;color:var(--text3)}
+
+/* ── ADEM GRID (SCHEDA) ── */
+.adem-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:11px;margin-top:14px}
+.adem-card{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--r2);padding:14px;
+  transition:border-color .2s;position:relative;
+}
+.adem-card.done{border-color:var(--green);background:rgba(22,163,74,.03)}
+.adem-card.opt-nc{border-color:var(--border);opacity:.8}
+.adem-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:11px}
+.adem-name{font-size:12px;font-weight:700;color:var(--text);line-height:1.3}
+.adem-fac{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);background:var(--surface2);padding:2px 6px;border-radius:8px;border:1px solid var(--border);white-space:nowrap}
+.adem-row{display:flex;align-items:center;justify-content:space-between}
+.big-sw{position:relative;width:46px;height:24px;flex-shrink:0}
+.big-sw input{opacity:0;width:0;height:0;position:absolute}
+.sw-track{
+  position:absolute;inset:0;
+  background:var(--surface2);border:1.5px solid var(--border2);
+  border-radius:12px;cursor:pointer;transition:background .18s,border-color .18s;
+}
+.sw-track::after{
+  content:'';position:absolute;
+  width:17px;height:17px;background:#fff;border-radius:50%;
+  top:2px;left:2px;transition:left .18s;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
+}
+.big-sw input:checked + .sw-track{background:var(--green);border-color:var(--green)}
+.big-sw input:checked + .sw-track::after{left:23px}
+.adem-status{font-size:11px;font-weight:700;color:var(--text3)}
+.adem-card.done .adem-status{color:var(--green)}
+.adem-date{margin-top:9px;display:none}
+.adem-date.show{display:block}
+.adem-date label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);display:block;margin-bottom:4px}
+.adem-date input[type=date]{
+  width:100%;padding:6px 9px;
+  border:1px solid var(--border2);border-radius:8px;
+  background:var(--surface2);color:var(--text);
+  font-size:12px;outline:none;transition:border-color .15s;
+}
+.adem-date input:focus{border-color:var(--blue)}
+.info-tip{position:absolute;top:13px;right:13px;color:var(--text3);cursor:help;display:flex}
+.info-tip .material-symbols-outlined{font-size:15px}
+
+/* ── SCHEDA HEADER ────── */
+.scheda-head{
+  background:linear-gradient(135deg,var(--sidebar) 0%,#1e2840 100%);
+  padding:22px;display:flex;align-items:center;gap:14px;
+  border-radius:var(--r2) var(--r2) 0 0;
+}
+.scheda-av{
+  width:48px;height:48px;border-radius:50%;
+  background:var(--blue);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:800;color:#fff;flex-shrink:0;
+  box-shadow:0 0 0 3px rgba(59,130,246,.3);
+}
+.scheda-nome{font-size:19px;font-weight:800;color:#fff;letter-spacing:-.3px}
+.scheda-num{font-size:11px;color:rgba(255,255,255,.4);margin-top:3px}
+.scheda-acts{margin-left:auto;display:flex;gap:7px}
+.scheda-btn{
+  background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);
+  border:1px solid rgba(255,255,255,.15);border-radius:9px;
+  padding:6px 13px;font-size:12px;font-weight:700;
+  display:inline-flex;align-items:center;gap:5px;cursor:pointer;
+  transition:background .12s;
+}
+.scheda-btn:hover{background:rgba(255,255,255,.18)}
+.scheda-btn .material-symbols-outlined{font-size:15px}
+.scheda-btn-danger{background:rgba(220,38,38,.15);color:#f87171;border-color:rgba(220,38,38,.25)}
+.scheda-btn-danger:hover{background:rgba(220,38,38,.25)}
+
+/* ── COLLAPSIBLE ──────── */
+.coll{border:1px solid var(--border);border-radius:var(--r);margin-bottom:9px}
+.coll-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 15px;cursor:pointer;
+  font-weight:700;font-size:13px;color:var(--text);
+  transition:background .1s;user-select:none;
+}
+.coll-head:hover{background:var(--surface2)}
+.coll-head .material-symbols-outlined{font-size:17px;color:var(--text3);transition:transform .2s}
+.coll-head.open .material-symbols-outlined{transform:rotate(180deg)}
+.coll-body{padding:15px;display:none}
+.coll-body.open{display:block}
+
+/* ── LOG ────────────── */
+.log-item{display:flex;gap:9px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+.log-item:last-child{border-bottom:none}
+.log-ic{
+  width:26px;height:26px;flex-shrink:0;border-radius:50%;
+  background:var(--blue-bg);
+  display:flex;align-items:center;justify-content:center;
+}
+.log-ic .material-symbols-outlined{font-size:14px;color:var(--blue)}
+.log-az{font-weight:700;color:var(--text);font-size:12px}
+.log-det{color:var(--text2);margin-top:1px}
+.log-t{font-size:10px;color:var(--text3);white-space:nowrap;margin-left:auto;padding-left:8px}
+
+/* ── MODAL ────────────── */
+.ov{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);
+  z-index:500;display:none;align-items:flex-start;justify-content:center;
+  padding:28px 16px;overflow-y:auto;
+}
+.ov.open{display:flex}
+.modal{
+  background:var(--surface);border-radius:14px;
+  width:100%;max-width:660px;margin:auto;
+  box-shadow:var(--sh-md);
+  display:flex;flex-direction:column;
+  max-height:calc(100vh - 56px);
+  border:1px solid var(--border);
+}
+.modal.wide{max-width:840px}
+.modal-head{
+  padding:18px 22px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+}
+.modal-title{font-size:16px;font-weight:800;color:var(--text);flex:1;letter-spacing:-.2px}
+.modal-body{flex:1;overflow-y:auto;padding:22px}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-shrink:0}
+
+/* ── FORM ─────────────── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg.full{grid-column:1/-1}
+.fg label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)}
+.fg input,.fg select,.fg textarea{
+  padding:8px 11px;border:1.5px solid var(--border2);border-radius:var(--r);
+  background:var(--canvas);color:var(--text);font-size:13px;outline:none;
+  transition:border-color .15s;
+}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--blue)}
+.fg textarea{resize:vertical;min-height:72px}
+
+/* ── TABS ────────────── */
+.tab-bar{display:flex;border-bottom:2px solid var(--border);margin-bottom:20px;gap:2px}
+.tab-btn{
+  padding:9px 18px;font-size:13px;font-weight:700;
+  color:var(--text2);border-bottom:2px solid transparent;
+  margin-bottom:-2px;cursor:pointer;
+  transition:color .13s,border-color .13s;
+  display:flex;align-items:center;gap:6px;
+}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-btn .material-symbols-outlined{font-size:17px}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* ── DROPZONE ────────── */
+.dropzone{
+  border:2px dashed var(--border2);border-radius:var(--r2);
+  padding:36px 22px;text-align:center;cursor:pointer;
+  transition:border-color .18s,background .18s;
+}
+.dropzone:hover,.dropzone.over{border-color:var(--blue);background:var(--blue-bg)}
+.dropzone .material-symbols-outlined{font-size:38px;color:var(--text3);margin-bottom:10px;display:block}
+.dropzone p{font-size:13px;color:var(--text2)}
+.dropzone strong{color:var(--blue)}
+
+/* ── IMPORT ROW ────── */
+.imp-row{
+  display:flex;align-items:center;gap:9px;
+  padding:7px 11px;border-radius:8px;font-size:12px;margin:3px 0;
+}
+.imp-row.ok{background:var(--green-bg);color:var(--green)}
+.imp-row.skip{background:var(--surface2);color:var(--text3)}
+.imp-row.err{background:var(--red-bg);color:var(--red)}
+.imp-row .material-symbols-outlined{font-size:15px}
+
+/* ── BULK BAR ────────── */
+.bulk-bar{
+  display:none;align-items:center;gap:11px;
+  padding:9px 16px;background:var(--blue-bg);
+  border-bottom:1px solid var(--blue-border);
+  font-size:13px;
+}
+.bulk-bar.show{display:flex}
+.bulk-n{font-weight:800;color:var(--blue)}
+
+/* ── SETTINGS ────────── */
+.sett-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px;margin-bottom:14px;box-shadow:var(--sh-sm)}
+.sett-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.sett-row:last-child{border-bottom:none}
+.sett-label{font-size:13px;font-weight:600;color:var(--text)}
+.sett-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.sett-section-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.sett-section-title .material-symbols-outlined{font-size:17px;color:var(--blue)}
+
+/* ── REPORT CARD ─────── */
+.rep-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r2);padding:18px;margin-bottom:12px;
+  display:flex;align-items:center;gap:16px;
+  box-shadow:var(--sh-sm);
+}
+.rep-icon .material-symbols-outlined{font-size:28px;color:var(--blue)}
+.rep-info{flex:1}
+.rep-title{font-weight:700;font-size:14px;color:var(--text)}
+.rep-sub{font-size:12px;color:var(--text3);margin-top:3px}
+
+/* ── EMPTY STATE ──────── */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:42px 20px;color:var(--text3);gap:10px}
+.empty .material-symbols-outlined{font-size:42px;opacity:.4}
+.empty p{font-size:13px;text-align:center}
+
+/* ── TOOLTIP ─────────── */
+#tooltip{
+  position:fixed;background:var(--sidebar);color:rgba(255,255,255,.85);
+  font-size:11px;padding:7px 11px;border-radius:8px;max-width:230px;
+  line-height:1.5;z-index:9999;pointer-events:none;opacity:0;
+  transition:opacity .12s;box-shadow:var(--sh-md);
+}
+#tooltip.show{opacity:1}
+
+/* ── TOAST ───────────── */
+#toasts{position:fixed;bottom:22px;right:22px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{
+  background:var(--sidebar);color:rgba(255,255,255,.9);
+  padding:10px 14px;border-radius:var(--r);font-size:13px;font-weight:500;
+  box-shadow:var(--sh-md);display:flex;align-items:center;gap:8px;
+  animation:tin .22s ease;pointer-events:auto;
+}
+.toast.err{background:var(--red)}
+.toast.info{background:var(--blue)}
+.toast .material-symbols-outlined{font-size:17px}
+@keyframes tin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SPINNER ─────────── */
+.spin{display:inline-block;width:15px;height:15px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:rot .6s linear infinite;vertical-align:middle}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* ── MOBILE ──────────── */
+.mob-menu{display:none;align-items:center;padding:5px;border-radius:8px;color:var(--text2)}
+.mob-ov{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99;display:none}
+.mob-ov.open{display:block}
+@media(max-width:768px){
+  :root{--sidebar-w:0px}
+  .sidebar{position:fixed;left:0;top:0;z-index:200;transform:translateX(-232px);width:232px;transition:transform .25s}
+  .sidebar.open{transform:translateX(0)}
+  .mob-menu{display:flex}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .insight-row{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .page-content{padding:14px}
+}
 </style>
 </head>
 <body>
 
-<!-- ===================== TOOLTIP GLOBAL ===================== -->
-<div class="tooltip-box" id="tooltip-box"></div>
-<div id="toast-container"></div>
-<div class="mobile-overlay" id="mobile-overlay" onclick="closeMobileMenu()"></div>
+<div id="tooltip"></div>
+<div id="toasts"></div>
+<div class="mob-ov" id="mob-ov" onclick="closeMob()"></div>
 
-<!-- ===================== LOGIN SCREEN ===================== -->
-<div id="login-screen">
-  <div class="login-card">
-    <div class="login-logo">
-      <div class="app-icon"><span class="material-symbols-outlined">admin_panel_settings</span></div>
-      <h1>CR Platform</h1>
-      <p>Piattaforma adempimenti CAF — GruppoPiù</p>
+<!-- ══ AUTH ══════════════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-layout">
+    <div class="auth-panel-left">
+      <div class="auth-brand">
+        <div class="auth-brand-dot"></div>
+        <span class="auth-brand-name">CR Platform</span>
+        <span class="auth-brand-sep">·</span>
+        <span class="auth-brand-sub">GruppoPiù CAF</span>
+      </div>
+      <div class="auth-hero">
+        <div class="auth-hero-tag">Piattaforma adempimenti</div>
+        <h1>Gestisci i tuoi CR in modo semplice ed efficace</h1>
+        <p>Monitora in tempo reale lo stato di ogni adempimento annuale. Dashboard, solleciti, report e import CSV in un unico posto.</p>
+        <div class="auth-features">
+          <div class="auth-feat"><div class="auth-feat-check">✓</div>Semaforo automatico per ogni CR</div>
+          <div class="auth-feat"><div class="auth-feat-check">✓</div>Import massivo via CSV</div>
+          <div class="auth-feat"><div class="auth-feat-check">✓</div>Export report e solleciti</div>
+          <div class="auth-feat"><div class="auth-feat-check">✓</div>Log completo delle modifiche</div>
+        </div>
+      </div>
     </div>
-    <div class="login-form">
-      <div>
-        <label>Email</label>
-        <input type="email" id="login-email" placeholder="email@esempio.com" autocomplete="email">
+    <div class="auth-panel-right">
+      <div class="auth-box">
+        <div class="auth-tabs">
+          <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Accedi</div>
+          <div class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Registrati</div>
+        </div>
+
+        <!-- LOGIN -->
+        <div class="auth-form-panel active" id="panel-login">
+          <div class="auth-form-title">Bentornato</div>
+          <div class="auth-form-sub">Inserisci le tue credenziali per accedere</div>
+          <div class="auth-form">
+            <div class="form-field">
+              <label>Email</label>
+              <input type="email" id="l-email" placeholder="nome@esempio.com" autocomplete="email">
+            </div>
+            <div class="form-field">
+              <label>Password</label>
+              <input type="password" id="l-pwd" placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <div class="auth-err" id="l-err">Credenziali non valide. Riprova.</div>
+            <button class="auth-submit" id="l-btn" onclick="doLogin()">
+              <span class="material-symbols-outlined">login</span>
+              Accedi alla piattaforma
+            </button>
+          </div>
+        </div>
+
+        <!-- SIGNUP -->
+        <div class="auth-form-panel" id="panel-signup">
+          <div class="auth-form-title">Crea account</div>
+          <div class="auth-form-sub">Registra un nuovo operatore sulla piattaforma</div>
+          <div class="auth-form">
+            <div class="form-field">
+              <label>Nome completo</label>
+              <input type="text" id="s-nome" placeholder="Mario Rossi">
+            </div>
+            <div class="form-field">
+              <label>Email</label>
+              <input type="email" id="s-email" placeholder="nome@esempio.com" autocomplete="email">
+            </div>
+            <div class="form-field">
+              <label>Password</label>
+              <input type="password" id="s-pwd" placeholder="Almeno 8 caratteri" autocomplete="new-password">
+            </div>
+            <div class="form-field">
+              <label>Conferma password</label>
+              <input type="password" id="s-pwd2" placeholder="Ripeti la password">
+            </div>
+            <div class="auth-err" id="s-err">Errore nella registrazione.</div>
+            <div class="auth-ok" id="s-ok">Account creato! Controlla la tua email per confermare.</div>
+            <button class="auth-submit" id="s-btn" onclick="doSignup()">
+              <span class="material-symbols-outlined">person_add</span>
+              Crea account
+            </button>
+          </div>
+        </div>
       </div>
-      <div>
-        <label>Password</label>
-        <input type="password" id="login-pwd" placeholder="••••••••" autocomplete="current-password">
-      </div>
-      <div class="login-err" id="login-err">Credenziali non valide. Riprova.</div>
-      <button class="btn-p" id="login-btn" onclick="doLogin()">
-        <span class="material-symbols-outlined">login</span>
-        Accedi
-      </button>
     </div>
   </div>
 </div>
 
-<!-- ===================== APP SCREEN ===================== -->
+<!-- ══ APP ════════════════════════════════════════ -->
 <div id="app-screen">
-  <div class="app-layout">
+  <div class="app">
 
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
-      <div class="sidebar-logo">
-        <div class="app-name">CR Platform</div>
-        <div class="app-sub">GruppoPiù CAF</div>
+      <div class="sb-header">
+        <div class="sb-logo-mark"><span class="material-symbols-outlined">admin_panel_settings</span></div>
+        <div>
+          <div class="sb-app-name">CR Platform</div>
+          <div class="sb-app-sub">GruppoPiù CAF</div>
+        </div>
       </div>
-      <nav class="sidebar-nav">
-        <div class="nav-label">Principale</div>
-        <div class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
-          <span class="material-symbols-outlined">dashboard</span>
-          Dashboard
+      <nav class="sb-nav">
+        <div class="sb-group-label">Principale</div>
+        <div class="sb-item active" data-page="dashboard" onclick="go('dashboard')">
+          <span class="material-symbols-outlined">dashboard</span>Dashboard
         </div>
-        <div class="nav-item" data-page="elenco" onclick="navigateTo('elenco')">
-          <span class="material-symbols-outlined">group</span>
-          Elenco CR
+        <div class="sb-item" data-page="elenco" onclick="go('elenco')">
+          <span class="material-symbols-outlined">group</span>Elenco CR
         </div>
-        <div class="nav-label">Strumenti</div>
-        <div class="nav-item" data-page="importa" onclick="navigateTo('importa')">
-          <span class="material-symbols-outlined">upload_file</span>
-          Importa / Aggiungi
+        <div class="sb-group-label">Strumenti</div>
+        <div class="sb-item" data-page="importa" onclick="go('importa')">
+          <span class="material-symbols-outlined">upload_file</span>Importa / Aggiungi
         </div>
-        <div class="nav-item" data-page="report" onclick="navigateTo('report')">
-          <span class="material-symbols-outlined">bar_chart</span>
-          Report / Export
+        <div class="sb-item" data-page="report" onclick="go('report')">
+          <span class="material-symbols-outlined">bar_chart</span>Report & Export
         </div>
-        <div class="nav-item" data-page="impostazioni" onclick="navigateTo('impostazioni')">
-          <span class="material-symbols-outlined">settings</span>
-          Impostazioni
+        <div class="sb-item" data-page="impostazioni" onclick="go('impostazioni')">
+          <span class="material-symbols-outlined">settings</span>Impostazioni
         </div>
       </nav>
-      <div class="sidebar-bottom">
-        <div class="theme-toggle">
+      <div class="sb-footer">
+        <div class="sb-theme">
           <span>Tema scuro</span>
-          <div class="toggle-switch" id="theme-toggle-sw" onclick="toggleTheme()"></div>
+          <div class="sw" id="sw-theme" onclick="toggleTheme()"></div>
         </div>
-        <div class="sidebar-user">
-          <div class="user-avatar" id="sidebar-avatar">U</div>
-          <div class="user-info">
-            <div class="user-name" id="sidebar-username">Utente</div>
-            <div class="user-role" id="sidebar-role">Operatore</div>
+        <div class="sb-user">
+          <div class="sb-av" id="sb-av">U</div>
+          <div>
+            <div class="sb-uname" id="sb-uname">Utente</div>
+            <div class="sb-urole" id="sb-urole">Operatore</div>
           </div>
-          <button class="btn-logout" onclick="doLogout()" title="Esci">
+          <button class="sb-logout" onclick="doLogout()" title="Esci">
             <span class="material-symbols-outlined">logout</span>
           </button>
         </div>
       </div>
     </aside>
 
-    <!-- MAIN AREA -->
-    <div class="main-area">
+    <!-- MAIN -->
+    <div class="main">
       <div class="topbar">
-        <button class="mobile-menu-btn btn-icon" onclick="openMobileMenu()">
+        <button class="mob-menu btn-icon" onclick="openMob()">
           <span class="material-symbols-outlined">menu</span>
         </button>
-        <div class="topbar-title" id="topbar-title">Dashboard</div>
-        <div class="search-box" id="global-search-box">
+        <div class="tb-title" id="tb-title">Dashboard</div>
+        <div class="tb-anno" id="tb-anno">2025</div>
+        <div class="search-field" id="search-field" style="display:none">
           <span class="material-symbols-outlined">search</span>
-          <input type="text" placeholder="Cerca CR..." id="global-search" oninput="onGlobalSearch()">
+          <input type="text" placeholder="Cerca CR..." id="search-inp" oninput="onSearch()">
         </div>
-        <button class="btn-p" onclick="openModalNuovoCR()">
+        <button class="btn-blue" onclick="openNuovoCR()">
           <span class="material-symbols-outlined">add</span>
           Aggiungi CR
         </button>
       </div>
-
-      <!-- PAGE CONTENT -->
       <div class="page-content" id="page-content">
-        <div class="empty-state">
-          <div class="spinner"></div>
-          <p>Caricamento in corso...</p>
-        </div>
+        <div class="empty"><div class="spin"></div><p>Caricamento…</p></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ===================== MODAL: SCHEDA CR ===================== -->
-<div class="modal-overlay" id="modal-scheda" onclick="onOverlayClick(event,'modal-scheda')">
-  <div class="modal-box wide">
-    <div class="modal-header">
+<!-- ══ MODAL: SCHEDA CR ════════════════════════════ -->
+<div class="ov" id="ov-scheda" onclick="ovClick(event,'ov-scheda')">
+  <div class="modal wide">
+    <div class="modal-head">
       <div class="modal-title" id="scheda-title">Scheda CR</div>
-      <button class="btn-icon" onclick="closeModal('modal-scheda')">
-        <span class="material-symbols-outlined">close</span>
-      </button>
+      <button class="btn-icon" onclick="closeModal('ov-scheda')"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal-body" id="scheda-body"></div>
-    <div class="modal-footer">
-      <button class="btn-s" onclick="closeModal('modal-scheda')">Chiudi</button>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeModal('ov-scheda')">Chiudi</button>
     </div>
   </div>
 </div>
 
-<!-- ===================== MODAL: MODIFICA / NUOVO CR ===================== -->
-<div class="modal-overlay" id="modal-cr-form" onclick="onOverlayClick(event,'modal-cr-form')">
-  <div class="modal-box">
-    <div class="modal-header">
+<!-- ══ MODAL: FORM CR ══════════════════════════════ -->
+<div class="ov" id="ov-crform" onclick="ovClick(event,'ov-crform')">
+  <div class="modal">
+    <div class="modal-head">
       <div class="modal-title" id="crform-title">Nuovo CR</div>
-      <button class="btn-icon" onclick="closeModal('modal-cr-form')">
-        <span class="material-symbols-outlined">close</span>
-      </button>
+      <button class="btn-icon" onclick="closeModal('ov-crform')"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="form-group">
-          <label>Nome *</label>
-          <input type="text" id="crform-nome">
-        </div>
-        <div class="form-group">
-          <label>Cognome *</label>
-          <input type="text" id="crform-cognome">
-        </div>
-        <div class="form-group">
-          <label>Codice Fiscale</label>
-          <input type="text" id="crform-cf" style="text-transform:uppercase">
-        </div>
-        <div class="form-group">
-          <label>Numero CR *</label>
-          <input type="text" id="crform-numero">
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="crform-email">
-        </div>
-        <div class="form-group">
-          <label>Stato</label>
-          <select id="crform-stato">
-            <option value="attivo">Attivo</option>
-            <option value="non_rinnova">Non rinnova</option>
-            <option value="revocato">Revocato</option>
-          </select>
-        </div>
-        <div class="form-group full">
-          <label>Note interne</label>
-          <textarea id="crform-note" rows="3"></textarea>
-        </div>
+        <div class="fg"><label>Nome *</label><input type="text" id="cf-nome"></div>
+        <div class="fg"><label>Cognome *</label><input type="text" id="cf-cognome"></div>
+        <div class="fg"><label>Codice fiscale</label><input type="text" id="cf-cf" style="text-transform:uppercase"></div>
+        <div class="fg"><label>Numero CR *</label><input type="text" id="cf-numero"></div>
+        <div class="fg"><label>Email</label><input type="email" id="cf-email"></div>
+        <div class="fg"><label>Stato</label><select id="cf-stato"><option value="attivo">Attivo</option><option value="non_rinnova">Non rinnova</option><option value="revocato">Revocato</option></select></div>
+        <div class="fg full"><label>Note interne</label><textarea id="cf-note" rows="3"></textarea></div>
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn-s" onclick="closeModal('modal-cr-form')">Annulla</button>
-      <button class="btn-p" onclick="salvaFormCR()">
-        <span class="material-symbols-outlined">save</span>
-        Salva
-      </button>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeModal('ov-crform')">Annulla</button>
+      <button class="btn-blue" onclick="salvaFormCR()"><span class="material-symbols-outlined">save</span>Salva</button>
     </div>
   </div>
 </div>
 
-<!-- ===================== MODAL: CONFERMA REVOCA ===================== -->
-<div class="modal-overlay" id="modal-revoca" onclick="onOverlayClick(event,'modal-revoca')">
-  <div class="modal-box" style="max-width:440px">
-    <div class="modal-header">
+<!-- ══ MODAL: REVOCA ═══════════════════════════════ -->
+<div class="ov" id="ov-revoca" onclick="ovClick(event,'ov-revoca')">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
       <div class="modal-title" style="color:var(--red)">Revocare CR?</div>
-      <button class="btn-icon" onclick="closeModal('modal-revoca')">
-        <span class="material-symbols-outlined">close</span>
-      </button>
+      <button class="btn-icon" onclick="closeModal('ov-revoca')"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal-body">
-      <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Stai per revocare il CR <strong id="revoca-nome"></strong>. Questa operazione è reversibile dalle impostazioni.</p>
-      <div class="form-group">
-        <label>Motivo revoca *</label>
-        <textarea id="revoca-motivo" rows="3" placeholder="Specifica il motivo della revoca..."></textarea>
-      </div>
+      <p style="color:var(--text2);font-size:13px;margin-bottom:14px">Stai per revocare il CR <strong id="rev-nome"></strong>. L'operazione è reversibile.</p>
+      <div class="fg"><label>Motivo revoca *</label><textarea id="rev-motivo" rows="3" placeholder="Specifica il motivo…"></textarea></div>
     </div>
-    <div class="modal-footer">
-      <button class="btn-s" onclick="closeModal('modal-revoca')">Annulla</button>
-      <button class="btn-s btn-danger" onclick="confermaRevoca()">
-        <span class="material-symbols-outlined">cancel</span>
-        Conferma revoca
-      </button>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeModal('ov-revoca')">Annulla</button>
+      <button class="btn-ghost btn-danger" onclick="confermaRevoca()"><span class="material-symbols-outlined">cancel</span>Conferma revoca</button>
     </div>
   </div>
 </div>
 
-<!-- ===================== MODAL: CONFERMA ELIMINA ===================== -->
-<div class="modal-overlay" id="modal-elimina" onclick="onOverlayClick(event,'modal-elimina')">
-  <div class="modal-box" style="max-width:420px">
-    <div class="modal-header">
+<!-- ══ MODAL: ELIMINA ══════════════════════════════ -->
+<div class="ov" id="ov-elimina" onclick="ovClick(event,'ov-elimina')">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head">
       <div class="modal-title" style="color:var(--red)">Eliminare CR?</div>
-      <button class="btn-icon" onclick="closeModal('modal-elimina')"><span class="material-symbols-outlined">close</span></button>
+      <button class="btn-icon" onclick="closeModal('ov-elimina')"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal-body">
-      <p style="color:var(--text2);font-size:13px">Eliminare definitivamente <strong id="elimina-nome"></strong>? Tutti gli adempimenti e i log verranno rimossi. L'operazione non è reversibile.</p>
+      <p style="color:var(--text2);font-size:13px">Eliminare definitivamente <strong id="el-nome"></strong>? Tutti gli adempimenti e i log verranno rimossi. Irreversibile.</p>
     </div>
-    <div class="modal-footer">
-      <button class="btn-s" onclick="closeModal('modal-elimina')">Annulla</button>
-      <button class="btn-s btn-danger" onclick="confermaElimina()">
-        <span class="material-symbols-outlined">delete</span>
-        Elimina definitivamente
-      </button>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeModal('ov-elimina')">Annulla</button>
+      <button class="btn-ghost btn-danger" onclick="confermaElimina()"><span class="material-symbols-outlined">delete</span>Elimina</button>
     </div>
   </div>
 </div>
 
-<!-- ===================== JAVASCRIPT ===================== -->
 <script>
-/* ============================
-   CONFIGURAZIONE — MODIFICA QUI
-============================ */
-const SB_URL = 'https://vbakkyfcpqvpvpovzjfg.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZiYWtreWZjcHF2cHZwb3Z6amZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNDI5MDcsImV4cCI6MjA5MDYxODkwN30.gUY4imi0WW-9uX2S6WqqGvKxTRlfxZceMISagRFK-OE';
+/* ════════════════════════════════════════
+   CONFIG — sostituisci con i tuoi valori
+════════════════════════════════════════ */
+const SB_URL = 'https://YOUR-PROJECT.supabase.co';
+const SB_KEY = 'YOUR-ANON-KEY';
 
-/* ============================
+/* ════════════════════════════════════════
    COSTANTI ADEMPIMENTI
-============================ */
-const ADEMPIMENTI_DEF = [
-  { key: 'appendice_a',         label: 'Appendice A',          dataKey: 'appendice_a_data',         obbligatorio: true,  tooltip: 'Appendice A al contratto, firmata dal CR e restituita al CAF.' },
-  { key: 'sepa',                label: 'Modulo SEPA',          dataKey: 'sepa_data',                obbligatorio: true,  tooltip: 'Modulo SEPA per addebito diretto, compilato e firmato.' },
-  { key: 'appendice_b',         label: 'Appendice B',          dataKey: 'appendice_b_data',         obbligatorio: false, tooltip: 'Appendice B facoltativa. Non è richiesta per operare.' },
-  { key: 'quota_agefis',        label: 'Quota Agefis',         dataKey: 'quota_agefis_data',        obbligatorio: true,  tooltip: 'Pagamento quota associativa annuale ad Agefis.' },
-  { key: 'quota_confesercenti', label: 'Quota Confesercenti',  dataKey: 'quota_confesercenti_data', obbligatorio: true,  tooltip: 'Pagamento quota associativa annuale a Confesercenti.' },
-  { key: 'polizza',             label: 'Polizza assicurativa', dataKey: 'polizza_data',             obbligatorio: true,  tooltip: 'Sottoscrizione e pagamento della polizza assicurativa annuale.' },
-  { key: 'corso_aggiornamento', label: 'Corso aggiornamento',  dataKey: 'corso_aggiornamento_data', obbligatorio: true,  tooltip: 'Iscrizione e pagamento del corso di aggiornamento annuale obbligatorio.' },
-  { key: 'bustoni',             label: 'Bustoni',              dataKey: 'bustoni_data',             obbligatorio: false, tooltip: 'Richiesta bustoni (opzionale). Spunta anche "Inviati" quando spediti.' },
+════════════════════════════════════════ */
+const ADEM = [
+  { key:'appendice_a',         label:'Appendice A',          dk:'appendice_a_data',         ob:true,  tip:'Appendice A al contratto, firmata dal CR e restituita al CAF.' },
+  { key:'sepa',                label:'Modulo SEPA',          dk:'sepa_data',                ob:true,  tip:'Modulo SEPA per addebito diretto, compilato e firmato.' },
+  { key:'appendice_b',         label:'Appendice B',          dk:'appendice_b_data',         ob:false, tip:'Appendice B facoltativa. Non richiesta per operare.' },
+  { key:'quota_agefis',        label:'Quota Agefis',         dk:'quota_agefis_data',        ob:true,  tip:'Pagamento quota associativa annuale ad Agefis.' },
+  { key:'quota_confesercenti', label:'Quota Confesercenti',  dk:'quota_confesercenti_data', ob:true,  tip:'Pagamento quota associativa annuale a Confesercenti.' },
+  { key:'polizza',             label:'Polizza assicurativa', dk:'polizza_data',             ob:true,  tip:'Sottoscrizione e pagamento della polizza assicurativa annuale.' },
+  { key:'corso_aggiornamento', label:'Corso aggiornamento',  dk:'corso_aggiornamento_data', ob:true,  tip:'Iscrizione e pagamento del corso di aggiornamento annuale obbligatorio.' },
+  { key:'bustoni',             label:'Bustoni',              dk:'bustoni_data',             ob:false, tip:'Richiesta bustoni (opzionale). Spunta "Inviati" quando spediti.' },
 ];
+const ADEM_OB = ADEM.filter(d=>d.ob);
 
-/* ============================
+/* ════════════════════════════════════════
    STATO GLOBALE
-============================ */
+════════════════════════════════════════ */
 const sb = supabase.createClient(SB_URL, SB_KEY);
-let DB_CR = [];
-let DB_ADEMPIMENTI = {};
-let currentUser = null;
-let userProfile = null;
+let DB_CR = [], DB_AD = {}, currentUser = null, userProfile = null;
 let annoAttivo = new Date().getFullYear();
 let currentPage = 'dashboard';
-let currentCrId = null;
-let editingCrId = null;
-let revocaCrId = null;
-let eliminaCrId = null;
-let currentMode = localStorage.getItem('theme') || 'light';
-let scadenzaConfig = { mese: 4, giorno: 30 }; // 30 aprile
-let dashChartInst = null;
-
-// filtri elenco
-let filtroStato = 'tutti';
-let filtroSearch = '';
+let theme = localStorage.getItem('theme') || 'light';
+let scad = { mese:4, giorno:30 };
+let editingCrId = null, revocaCrId = null, eliminaCrId = null;
+let filtroStato = 'tutti', filtroSearch = '';
 let selectedCrs = new Set();
+let chartDash = null;
 
-/* ============================
+/* ════════════════════════════════════════
    INIT
-============================ */
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAllModals(); });
+════════════════════════════════════════ */
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeAllOv(); });
+document.getElementById('l-pwd')?.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+document.getElementById('s-pwd2')?.addEventListener('keydown',e=>{if(e.key==='Enter')doSignup()});
 
 async function init() {
   applyTheme();
   try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-      currentUser = session.user;
-      await loadProfile();
-      showApp();
-      await loadAll();
-    } else {
-      showLogin();
-    }
-  } catch(err) {
-    showLogin();
-  }
+    const { data:{session} } = await sb.auth.getSession();
+    if(session){ currentUser=session.user; await loadProfile(); showApp(); await loadAll(); }
+    else { showAuth(); }
+  } catch(e){ showAuth(); }
 }
 
 function applyTheme() {
-  document.body.classList.toggle('dark', currentMode === 'dark');
-  const sw = document.getElementById('theme-toggle-sw');
-  if (sw) sw.classList.toggle('on', currentMode === 'dark');
+  document.body.classList.toggle('dk', theme==='dark');
+  const sw = document.getElementById('sw-theme');
+  if(sw) sw.classList.toggle('on', theme==='dark');
 }
-
 function toggleTheme() {
-  currentMode = currentMode === 'light' ? 'dark' : 'light';
-  localStorage.setItem('theme', currentMode);
+  theme = theme==='dark'?'light':'dark';
+  localStorage.setItem('theme',theme);
   applyTheme();
-  if (dashChartInst) { dashChartInst.destroy(); dashChartInst = null; }
-  renderCurrentPage();
+  if(chartDash){chartDash.destroy();chartDash=null;}
+  renderPage();
 }
 
-function showLogin() {
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('app-screen').style.display = 'none';
+function showAuth() {
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('app-screen').style.display='none';
 }
-
 function showApp() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app-screen').style.display = 'block';
-  if (userProfile) {
-    const ini = (userProfile.nome || currentUser.email || 'U').charAt(0).toUpperCase();
-    document.getElementById('sidebar-avatar').textContent = ini;
-    document.getElementById('sidebar-username').textContent = userProfile.nome || currentUser.email;
-    document.getElementById('sidebar-role').textContent = userProfile.ruolo === 'admin' ? 'Amministratore' : 'Operatore';
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+  document.getElementById('tb-anno').textContent = annoAttivo;
+  if(userProfile) {
+    const ini = (userProfile.nome||currentUser.email||'U').charAt(0).toUpperCase();
+    document.getElementById('sb-av').textContent = ini;
+    document.getElementById('sb-uname').textContent = userProfile.nome||currentUser.email;
+    document.getElementById('sb-urole').textContent = userProfile.ruolo==='admin'?'Amministratore':'Operatore';
   }
 }
 
-/* ============================
-   AUTH
-============================ */
-async function doLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  const pwd = document.getElementById('login-pwd').value;
-  const err = document.getElementById('login-err');
-  const btn = document.getElementById('login-btn');
-  err.classList.remove('visible');
-  btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div>';
-  const { error } = await sb.auth.signInWithPassword({ email, password: pwd });
-  btn.disabled = false;
-  btn.innerHTML = '<span class="material-symbols-outlined">login</span>Accedi';
-  if (error) { err.classList.add('visible'); return; }
-  const { data: { session } } = await sb.auth.getSession();
-  currentUser = session.user;
-  await loadProfile();
-  showApp();
-  await loadAll();
+/* ════════════════════════════════════════
+   AUTH TAB
+════════════════════════════════════════ */
+function switchAuthTab(tab) {
+  document.getElementById('tab-login').classList.toggle('active', tab==='login');
+  document.getElementById('tab-signup').classList.toggle('active', tab==='signup');
+  document.getElementById('panel-login').classList.toggle('active', tab==='login');
+  document.getElementById('panel-signup').classList.toggle('active', tab==='signup');
 }
 
-document.getElementById('login-pwd')?.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+/* ════════════════════════════════════════
+   LOGIN / SIGNUP / LOGOUT
+════════════════════════════════════════ */
+async function doLogin() {
+  const email=document.getElementById('l-email').value.trim();
+  const pwd=document.getElementById('l-pwd').value;
+  const err=document.getElementById('l-err');
+  const btn=document.getElementById('l-btn');
+  err.classList.remove('show');
+  btn.disabled=true; btn.innerHTML='<div class="spin"></div>';
+  const {error} = await sb.auth.signInWithPassword({email,password:pwd});
+  btn.disabled=false;
+  btn.innerHTML='<span class="material-symbols-outlined">login</span>Accedi alla piattaforma';
+  if(error){err.classList.add('show');return;}
+  const {data:{session}} = await sb.auth.getSession();
+  currentUser=session.user;
+  await loadProfile(); showApp(); await loadAll();
+}
+
+async function doSignup() {
+  const nome=document.getElementById('s-nome').value.trim();
+  const email=document.getElementById('s-email').value.trim();
+  const pwd=document.getElementById('s-pwd').value;
+  const pwd2=document.getElementById('s-pwd2').value;
+  const err=document.getElementById('s-err');
+  const ok=document.getElementById('s-ok');
+  const btn=document.getElementById('s-btn');
+  err.classList.remove('show'); ok.classList.remove('show');
+  if(!nome||!email||!pwd){err.textContent='Compila tutti i campi.';err.classList.add('show');return;}
+  if(pwd.length<8){err.textContent='La password deve essere di almeno 8 caratteri.';err.classList.add('show');return;}
+  if(pwd!==pwd2){err.textContent='Le password non coincidono.';err.classList.add('show');return;}
+  btn.disabled=true;btn.innerHTML='<div class="spin"></div>';
+  const {data,error} = await sb.auth.signUp({email,password:pwd});
+  btn.disabled=false;
+  btn.innerHTML='<span class="material-symbols-outlined">person_add</span>Crea account';
+  if(error){err.textContent=error.message;err.classList.add('show');return;}
+  if(data?.user) {
+    await sb.from('profili').upsert({id:data.user.id,nome,ruolo:'operatore'});
+  }
+  ok.classList.add('show');
+}
 
 async function doLogout() {
   await sb.auth.signOut();
-  currentUser = null; userProfile = null;
-  DB_CR = []; DB_ADEMPIMENTI = {};
-  showLogin();
+  currentUser=null;userProfile=null;DB_CR=[];DB_AD={};
+  showAuth();
 }
 
 async function loadProfile() {
-  if (!currentUser) return;
-  const { data } = await sb.from('profili').select('*').eq('id', currentUser.id).single();
-  userProfile = data;
+  if(!currentUser)return;
+  const {data} = await sb.from('profili').select('*').eq('id',currentUser.id).single();
+  userProfile=data;
 }
 
-/* ============================
-   DATA LOADING
-============================ */
+/* ════════════════════════════════════════
+   DATA
+════════════════════════════════════════ */
 async function loadAll() {
-  await Promise.all([loadCR(), loadAdempimenti()]);
-  renderCurrentPage();
+  await Promise.all([loadCR(),loadAD()]);
+  renderPage();
 }
-
 async function loadCR() {
-  const { data, error } = await sb.from('cr').select('*').order('cognome');
-  if (!error) DB_CR = data || [];
+  const {data,error}=await sb.from('cr').select('*').order('cognome');
+  if(!error)DB_CR=data||[];
+}
+async function loadAD() {
+  const {data,error}=await sb.from('adempimenti').select('*').eq('anno',annoAttivo);
+  if(!error){DB_AD={};(data||[]).forEach(a=>{DB_AD[a.cr_id]=a;});}
 }
 
-async function loadAdempimenti() {
-  const { data, error } = await sb.from('adempimenti').select('*').eq('anno', annoAttivo);
-  if (!error) {
-    DB_ADEMPIMENTI = {};
-    (data || []).forEach(a => { DB_ADEMPIMENTI[a.cr_id] = a; });
-  }
-}
-
-/* ============================
+/* ════════════════════════════════════════
    BUSINESS LOGIC
-============================ */
-function calcolaStato(ad, cr) {
-  if (!ad || cr?.stato === 'revocato') return 'rosso';
-  const obbligatori = ADEMPIMENTI_DEF.filter(d => d.obbligatorio).map(d => ad[d.key]);
-  const completati = obbligatori.filter(Boolean).length;
-  if (completati === obbligatori.length) return 'verde';
-  if (completati === 0) return 'rosso';
+════════════════════════════════════════ */
+function statoSemaforo(ad, cr) {
+  if(!ad||cr?.stato==='revocato') return 'rosso';
+  const vals = ADEM_OB.map(d=>ad[d.key]);
+  const n = vals.filter(Boolean).length;
+  if(n===vals.length) return 'verde';
+  if(n===0) return 'rosso';
   return 'arancio';
 }
-
-function statoLabel(stato) {
-  const m = { verde: 'In regola', arancio: 'In sospeso', rosso: 'Inadempiente' };
-  return m[stato] || stato;
+function statoLabel(s) { return {verde:'In regola',arancio:'In sospeso',rosso:'Inadempiente'}[s]||s; }
+function statoClass(s) { return {verde:'b-green',arancio:'b-orange',rosso:'b-red'}[s]||'b-gray'; }
+function contaAdem(ad) {
+  if(!ad) return {tot:0,totale:ADEM.length};
+  return {tot:ADEM.filter(d=>ad[d.key]).length,totale:ADEM.length};
+}
+function mancantiOb(ad) {
+  if(!ad) return ADEM_OB;
+  return ADEM_OB.filter(d=>!ad[d.key]);
+}
+function giorniScad() {
+  const oggi=new Date();
+  const s=new Date(oggi.getFullYear(),scad.mese-1,scad.giorno);
+  if(s<oggi)return null;
+  return Math.ceil((s-oggi)/(1000*60*60*24));
 }
 
-function adempimentiCompletati(ad) {
-  if (!ad) return { completati: 0, totale: ADEMPIMENTI_DEF.length, obbCompletati: 0, obbTotale: ADEMPIMENTI_DEF.filter(d=>d.obbligatorio).length };
-  const completati = ADEMPIMENTI_DEF.filter(d => ad[d.key]).length;
-  const obbCompletati = ADEMPIMENTI_DEF.filter(d => d.obbligatorio && ad[d.key]).length;
-  return { completati, totale: ADEMPIMENTI_DEF.length, obbCompletati, obbTotale: ADEMPIMENTI_DEF.filter(d=>d.obbligatorio).length };
-}
-
-function mancantiObbligatori(ad) {
-  if (!ad) return ADEMPIMENTI_DEF.filter(d => d.obbligatorio);
-  return ADEMPIMENTI_DEF.filter(d => d.obbligatorio && !ad[d.key]);
-}
-
-function giorniAScadenza() {
-  const oggi = new Date();
-  const anno = oggi.getFullYear();
-  const scad = new Date(anno, scadenzaConfig.mese - 1, scadenzaConfig.giorno);
-  if (scad < oggi) return null;
-  return Math.ceil((scad - oggi) / (1000 * 60 * 60 * 24));
-}
-
-/* ============================
+/* ════════════════════════════════════════
    ROUTING
-============================ */
-function navigateTo(page) {
-  currentPage = page;
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.page === page));
-  const titles = { dashboard: 'Dashboard', elenco: 'Elenco CR', importa: 'Importa / Aggiungi', report: 'Report & Export', impostazioni: 'Impostazioni' };
-  document.getElementById('topbar-title').textContent = titles[page] || page;
-  document.getElementById('global-search-box').style.display = (page === 'elenco') ? 'flex' : 'none';
-  if (dashChartInst && page !== 'dashboard') { dashChartInst.destroy(); dashChartInst = null; }
-  renderCurrentPage();
-  closeMobileMenu();
+════════════════════════════════════════ */
+function go(page) {
+  currentPage=page;
+  document.querySelectorAll('.sb-item').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
+  const titles={dashboard:'Dashboard',elenco:'Elenco CR',importa:'Importa / Aggiungi',report:'Report & Export',impostazioni:'Impostazioni'};
+  document.getElementById('tb-title').textContent=titles[page]||page;
+  document.getElementById('search-field').style.display=(page==='elenco')?'flex':'none';
+  if(chartDash&&page!=='dashboard'){chartDash.destroy();chartDash=null;}
+  renderPage();
+  closeMob();
+}
+function renderPage() {
+  const map={dashboard:rDash,elenco:rElenco,importa:rImporta,report:rReport,impostazioni:rImpost};
+  if(map[currentPage])map[currentPage]();
 }
 
-function renderCurrentPage() {
-  const pages = { dashboard: renderDashboard, elenco: renderElenco, importa: renderImporta, report: renderReport, impostazioni: renderImpostazioni };
-  if (pages[currentPage]) pages[currentPage]();
-}
-
-/* ============================
+/* ════════════════════════════════════════
    DASHBOARD
-============================ */
-function renderDashboard() {
-  const crAttivi = DB_CR.filter(c => c.stato === 'attivo');
-  const verdi = crAttivi.filter(c => calcolaStato(DB_ADEMPIMENTI[c.id], c) === 'verde').length;
-  const arancio = crAttivi.filter(c => calcolaStato(DB_ADEMPIMENTI[c.id], c) === 'arancio').length;
-  const rossi = crAttivi.filter(c => calcolaStato(DB_ADEMPIMENTI[c.id], c) === 'rosso').length;
-  const giorni = giorniAScadenza();
+════════════════════════════════════════ */
+function rDash() {
+  const att=DB_CR.filter(c=>c.stato==='attivo');
+  const verdi=att.filter(c=>statoSemaforo(DB_AD[c.id],c)==='verde').length;
+  const aran=att.filter(c=>statoSemaforo(DB_AD[c.id],c)==='arancio').length;
+  const rossi=att.filter(c=>statoSemaforo(DB_AD[c.id],c)==='rosso').length;
+  const gScad=giorniScad();
 
-  let bannerHTML = '';
-  if (giorni !== null && giorni <= 60) {
-    bannerHTML = `
-    <div class="scadenza-banner">
-      <span class="material-symbols-outlined">schedule</span>
-      <div>
-        <div class="sb-title">Scadenza adempimenti</div>
-        <div class="sb-sub">30 aprile ${new Date().getFullYear()} — verifica che tutti i CR siano in regola</div>
-      </div>
-      <div class="scadenza-count">${giorni}<span> giorni</span></div>
-    </div>`;
-  }
+  const bannerHTML = gScad!==null && gScad<=60 ? `
+  <div class="scad-banner">
+    <span class="material-symbols-outlined">schedule</span>
+    <div>
+      <div class="scad-title">Scadenza adempimenti — ${scad.giorno}/${scad.mese}/${new Date().getFullYear()}</div>
+      <div class="scad-sub">Verifica che tutti i CR siano in regola prima della scadenza</div>
+    </div>
+    <div class="scad-days">${gScad}<span>gg</span></div>
+  </div>` : '';
 
-  // CR da sollecitare
-  const daSollecitare = DB_CR.filter(c => {
-    if (c.stato !== 'attivo') return false;
-    const s = calcolaStato(DB_ADEMPIMENTI[c.id], c);
-    return s === 'arancio' || s === 'rosso';
-  }).slice(0, 8);
+  const pctVerdi = att.length ? Math.round(verdi/att.length*100) : 0;
+  const pctAran  = att.length ? Math.round(aran/att.length*100) : 0;
+  const pctRossi = att.length ? Math.round(rossi/att.length*100) : 0;
 
-  const sollRows = daSollecitare.map(cr => {
-    const ad = DB_ADEMPIMENTI[cr.id];
-    const stato = calcolaStato(ad, cr);
-    const mancanti = mancantiObbligatori(ad);
-    const tags = mancanti.map(m => `<span class="manca-tag ${stato === 'rosso' ? 'rosso' : ''}">${m.label}</span>`).join('');
-    return `
-    <tr onclick="openSchedaCR('${cr.id}')">
+  const sollRows = DB_CR.filter(c=>{
+    if(c.stato!=='attivo')return false;
+    const s=statoSemaforo(DB_AD[c.id],c);
+    return s==='arancio'||s==='rosso';
+  }).slice(0,7).map(cr=>{
+    const ad=DB_AD[cr.id];
+    const s=statoSemaforo(ad,cr);
+    const manc=mancantiOb(ad);
+    const tags=manc.map(m=>`<span class="manca ${s==='rosso'?'red':''}">${m.label}</span>`).join('');
+    return `<tr onclick="openScheda('${cr.id}')">
       <td class="td-name">${cr.cognome} ${cr.nome}</td>
-      <td><span class="badge badge-${stato}">${statoLabel(stato)}</span></td>
-      <td>${tags || '<span style="color:var(--text3);font-size:11px">—</span>'}</td>
-      <td><button class="btn-s" style="font-size:12px;padding:5px 10px" onclick="event.stopPropagation();openSchedaCR('${cr.id}')"><span class="material-symbols-outlined" style="font-size:16px">open_in_new</span>Apri</button></td>
+      <td><span class="badge ${statoClass(s)}">${statoLabel(s)}</span></td>
+      <td>${tags}</td>
+      <td onclick="event.stopPropagation()"><button class="btn-ghost" style="padding:5px 10px;font-size:11px" onclick="openScheda('${cr.id}')"><span class="material-symbols-outlined" style="font-size:15px">open_in_new</span>Apri</button></td>
     </tr>`;
   }).join('');
-
-  // Chart data
-  const chartData = ADEMPIMENTI_DEF.map(d => {
-    const count = crAttivi.filter(cr => DB_ADEMPIMENTI[cr.id] && DB_ADEMPIMENTI[cr.id][d.key]).length;
-    return { label: d.label, count, pct: crAttivi.length ? Math.round(count / crAttivi.length * 100) : 0 };
-  });
 
   document.getElementById('page-content').innerHTML = `
     ${bannerHTML}
     <div class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-label">CR Attivi totali</div>
-        <div class="kpi-value">${crAttivi.length}</div>
-        <div class="kpi-sub">${DB_CR.filter(c=>c.stato==='revocato').length} revocati</div>
+        <div class="kpi-card-top">
+          <div class="kpi-icon-wrap ki-blue"><span class="material-symbols-outlined">group</span></div>
+          <div class="kpi-trend trend-neu">Anno ${annoAttivo}</div>
+        </div>
+        <div class="kpi-value">${att.length}</div>
+        <div class="kpi-label">CR Attivi</div>
+        <div class="kpi-meta">${DB_CR.filter(c=>c.stato==='revocato').length} revocati</div>
+        <div class="kpi-bar blue"></div>
       </div>
       <div class="kpi-card">
+        <div class="kpi-card-top">
+          <div class="kpi-icon-wrap ki-green"><span class="material-symbols-outlined">check_circle</span></div>
+          <div class="kpi-trend trend-up">↑ ${pctVerdi}%</div>
+        </div>
+        <div class="kpi-value" style="color:var(--green)">${verdi}</div>
         <div class="kpi-label">In regola</div>
-        <div class="kpi-value verde">${verdi}</div>
-        <div class="kpi-sub">${crAttivi.length ? Math.round(verdi/crAttivi.length*100) : 0}% del totale</div>
+        <div class="kpi-meta">Tutti gli adempimenti ok</div>
+        <div class="kpi-bar green"></div>
       </div>
       <div class="kpi-card">
+        <div class="kpi-card-top">
+          <div class="kpi-icon-wrap ki-orange"><span class="material-symbols-outlined">schedule</span></div>
+          <div class="kpi-trend trend-neu">${pctAran}%</div>
+        </div>
+        <div class="kpi-value" style="color:var(--orange)">${aran}</div>
         <div class="kpi-label">In sospeso</div>
-        <div class="kpi-value arancio">${arancio}</div>
-        <div class="kpi-sub">Adempimenti parziali</div>
+        <div class="kpi-meta">Adempimenti parziali</div>
+        <div class="kpi-bar orange"></div>
       </div>
       <div class="kpi-card">
+        <div class="kpi-card-top">
+          <div class="kpi-icon-wrap ki-red"><span class="material-symbols-outlined">cancel</span></div>
+          <div class="kpi-trend trend-down">${pctRossi}%</div>
+        </div>
+        <div class="kpi-value" style="color:var(--red)">${rossi}</div>
         <div class="kpi-label">Inadempienti</div>
-        <div class="kpi-value rosso">${rossi}</div>
-        <div class="kpi-sub">Nessun adempimento</div>
+        <div class="kpi-meta">0 adempimenti completati</div>
+        <div class="kpi-bar red"></div>
       </div>
     </div>
 
-    <div class="section-card" style="margin-bottom:20px">
-      <div class="section-title"><span class="material-symbols-outlined">bar_chart</span>Avanzamento adempimenti — ${annoAttivo}</div>
-      <canvas id="dash-chart" height="220"></canvas>
+    <div class="insight-row">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><span class="material-symbols-outlined">bar_chart</span>Avanzamento adempimenti ${annoAttivo}</div>
+          <div style="font-size:11px;color:var(--text3)">${att.length} CR attivi</div>
+        </div>
+        <div class="card-body" style="padding-bottom:16px">
+          <canvas id="chart-dash" height="200"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><span class="material-symbols-outlined">donut_large</span>Panoramica</div>
+        </div>
+        <div style="padding:6px 0 0">
+          <div class="gauge-wrap">
+            <canvas id="chart-gauge" width="200" height="110"></canvas>
+            <div class="gauge-center">
+              <div class="gauge-pct">${pctVerdi}%</div>
+              <div class="gauge-lbl">In regola</div>
+            </div>
+          </div>
+          <div class="gauge-legend">
+            <div class="gauge-leg-item">
+              <div class="gauge-leg-left"><div class="gauge-leg-dot" style="background:var(--green)"></div>In regola</div>
+              <div class="gauge-leg-val">${verdi}</div>
+            </div>
+            <div class="gauge-leg-item">
+              <div class="gauge-leg-left"><div class="gauge-leg-dot" style="background:var(--orange)"></div>In sospeso</div>
+              <div class="gauge-leg-val">${aran}</div>
+            </div>
+            <div class="gauge-leg-item">
+              <div class="gauge-leg-left"><div class="gauge-leg-dot" style="background:var(--red)"></div>Inadempienti</div>
+              <div class="gauge-leg-val">${rossi}</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="table-wrap">
-      <div style="padding:16px 16px 0;display:flex;align-items:center;justify-content:space-between">
-        <div class="section-title" style="margin-bottom:0"><span class="material-symbols-outlined">warning</span>CR da sollecitare</div>
-        <button class="btn-s" onclick="navigateTo('elenco')" style="font-size:12px">Vedi tutti</button>
+      <div class="table-toolbar">
+        <div class="table-title"><span class="material-symbols-outlined">warning</span>CR da sollecitare</div>
+        <button class="btn-ghost" style="margin-left:auto;font-size:12px" onclick="go('elenco')"><span class="material-symbols-outlined">arrow_forward</span>Vedi tutti</button>
       </div>
-      ${daSollecitare.length === 0 ? `<div class="empty-state"><span class="material-symbols-outlined">check_circle</span><p>Tutti i CR attivi sono in regola.</p></div>` : `
-      <table style="margin-top:12px">
-        <thead><tr><th>Nome</th><th>Stato</th><th>Cosa manca</th><th>Azione</th></tr></thead>
-        <tbody>${sollRows}</tbody>
-      </table>`}
+      ${sollRows?`<table><thead><tr><th>Nome CR</th><th>Stato</th><th>Cosa manca</th><th></th></tr></thead><tbody>${sollRows}</tbody></table>`:`<div class="empty"><span class="material-symbols-outlined">check_circle</span><p>Tutti i CR attivi sono in regola.</p></div>`}
     </div>`;
 
-  // Render chart
-  setTimeout(() => {
-    const ctx = document.getElementById('dash-chart');
-    if (!ctx) return;
-    if (dashChartInst) dashChartInst.destroy();
-    const isDark = currentMode === 'dark';
-    const textColor = isDark ? '#94a3b8' : '#475569';
-    const gridColor = isDark ? '#1e293b' : '#f1f5f9';
-    dashChartInst = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: chartData.map(d => d.label),
-        datasets: [{
-          label: 'CR completati',
-          data: chartData.map(d => d.count),
-          backgroundColor: chartData.map(d => d.pct >= 80 ? 'rgba(16,185,129,.7)' : d.pct >= 40 ? 'rgba(245,158,11,.7)' : 'rgba(239,68,68,.7)'),
-          borderRadius: 6,
+  setTimeout(()=>{
+    const isDk = theme==='dark';
+    const gridC = isDk?'rgba(255,255,255,.06)':'rgba(0,0,0,.06)';
+    const textC = isDk?'#8892a4':'#9ca3af';
+    const chartData = ADEM.map(d=>{
+      const cnt=att.filter(cr=>DB_AD[cr.id]&&DB_AD[cr.id][d.key]).length;
+      return {label:d.label,cnt,pct:att.length?Math.round(cnt/att.length*100):0};
+    });
+    const ctx=document.getElementById('chart-dash');
+    if(!ctx)return;
+    if(chartDash)chartDash.destroy();
+    chartDash=new Chart(ctx,{
+      type:'bar',
+      data:{
+        labels:chartData.map(d=>d.label),
+        datasets:[{
+          data:chartData.map(d=>d.cnt),
+          backgroundColor:chartData.map(d=>d.pct>=80?'rgba(22,163,74,.75)':d.pct>=40?'rgba(217,119,6,.75)':'rgba(220,38,38,.65)'),
+          borderRadius:6,
+          borderSkipped:false,
         }]
       },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: ctx => `${ctx.raw} CR (${chartData[ctx.dataIndex].pct}%)`
-            }
-          }
-        },
-        scales: {
-          x: { max: crAttivi.length || 1, ticks: { color: textColor, precision: 0 }, grid: { color: gridColor } },
-          y: { ticks: { color: textColor, font: { size: 11 } }, grid: { display: false } }
+      options:{
+        indexAxis:'y',responsive:true,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw} CR — ${chartData[c.dataIndex].pct}%`}}},
+        scales:{
+          x:{max:att.length||1,grid:{color:gridC},ticks:{color:textC,precision:0,font:{size:11}}},
+          y:{grid:{display:false},ticks:{color:textC,font:{size:11}}}
         }
       }
     });
-  }, 50);
+    // Gauge
+    const gCtx=document.getElementById('chart-gauge');
+    if(gCtx){
+      const total=att.length||1;
+      new Chart(gCtx,{
+        type:'doughnut',
+        data:{
+          datasets:[{
+            data:[verdi,aran,rossi,Math.max(0,total-verdi-aran-rossi)].map(v=>Math.max(v,0)),
+            backgroundColor:['rgba(22,163,74,.8)','rgba(217,119,6,.8)','rgba(220,38,38,.8)','rgba(0,0,0,.05)'],
+            borderWidth:0,
+            circumference:180,rotation:270,
+          }]
+        },
+        options:{
+          cutout:'75%',responsive:false,
+          plugins:{legend:{display:false},tooltip:{enabled:false}}
+        }
+      });
+    }
+  },50);
 }
 
-/* ============================
+/* ════════════════════════════════════════
    ELENCO CR
-============================ */
-function renderElenco() {
-  let crFiltrati = DB_CR.filter(cr => {
-    const matchSearch = !filtroSearch || [cr.nome, cr.cognome, cr.codice_fiscale, cr.numero_cr, cr.email].some(v => v && v.toLowerCase().includes(filtroSearch.toLowerCase()));
-    const stato = calcolaStato(DB_ADEMPIMENTI[cr.id], cr);
-    const matchStato = filtroStato === 'tutti' || stato === filtroStato;
-    return matchSearch && matchStato;
+════════════════════════════════════════ */
+function rElenco() {
+  const lista=DB_CR.filter(cr=>{
+    const matchS=!filtroSearch||[cr.nome,cr.cognome,cr.codice_fiscale,cr.numero_cr,cr.email].some(v=>v&&v.toLowerCase().includes(filtroSearch.toLowerCase()));
+    const s=statoSemaforo(DB_AD[cr.id],cr);
+    const matchF=filtroStato==='tutti'||s===filtroStato;
+    return matchS&&matchF;
   });
 
-  const rows = crFiltrati.map((cr, i) => {
-    const ad = DB_ADEMPIMENTI[cr.id];
-    const stato = calcolaStato(ad, cr);
-    const { completati, totale } = adempimentiCompletati(ad);
-    const isSelected = selectedCrs.has(cr.id);
-    const crStato = cr.stato !== 'attivo' ? `<span class="badge badge-rosso">${cr.stato}</span>` : `<span class="badge badge-${stato}">${statoLabel(stato)}</span>`;
-    return `
-    <tr onclick="openSchedaCR('${cr.id}')">
-      <td onclick="event.stopPropagation()"><input type="checkbox" ${isSelected?'checked':''} onchange="toggleSelectCR('${cr.id}',this.checked)" style="cursor:pointer;accent-color:var(--accent)"></td>
-      <td class="td-code">${cr.numero_cr}</td>
+  const rows=lista.map(cr=>{
+    const ad=DB_AD[cr.id];
+    const s=statoSemaforo(ad,cr);
+    const {tot,totale}=contaAdem(ad);
+    const pct=Math.round(tot/totale*100);
+    const pclass=pct>=100?'green':pct>=50?'orange':'red';
+    const isChecked=selectedCrs.has(cr.id);
+    return `<tr onclick="openScheda('${cr.id}')">
+      <td onclick="event.stopPropagation()"><input type="checkbox" ${isChecked?'checked':''} onchange="toggleSel('${cr.id}',this.checked)" style="cursor:pointer;accent-color:var(--blue)"></td>
+      <td class="td-mono">${cr.numero_cr}</td>
       <td class="td-name">${cr.cognome} ${cr.nome}</td>
-      <td style="font-size:12px;color:var(--text3)">${cr.codice_fiscale || '—'}</td>
-      <td style="font-size:12px">${cr.email || '—'}</td>
-      <td>${crStato}</td>
-      <td><span class="adempimenti-count"><span>${completati}</span>/${totale}</span></td>
+      <td style="font-size:12px;color:var(--text3)">${cr.codice_fiscale||'—'}</td>
+      <td style="font-size:12px">${cr.email||'—'}</td>
+      <td><span class="badge ${statoClass(s)}">${statoLabel(s)}</span>${cr.stato!=='attivo'?`<span class="badge b-red" style="margin-left:5px">${cr.stato}</span>`:''}</td>
+      <td>
+        <div class="prog-wrap">
+          <div class="prog-bar"><div class="prog-fill ${pclass}" style="width:${pct}%"></div></div>
+          <span class="prog-text" style="color:var(--${pclass})">${tot}/${totale}</span>
+        </div>
+      </td>
       <td class="td-actions" onclick="event.stopPropagation()">
-        <button class="btn-icon" title="Apri scheda" onclick="openSchedaCR('${cr.id}')"><span class="material-symbols-outlined">visibility</span></button>
-        <button class="btn-icon" title="Modifica" onclick="openModalModificaCR('${cr.id}')"><span class="material-symbols-outlined">edit</span></button>
-        ${userProfile?.ruolo === 'admin' ? `<button class="btn-icon" title="Elimina" style="color:var(--red)" onclick="openModalElimina('${cr.id}')"><span class="material-symbols-outlined">delete</span></button>` : ''}
+        <button class="btn-icon" title="Apri scheda" onclick="openScheda('${cr.id}')"><span class="material-symbols-outlined">visibility</span></button>
+        <button class="btn-icon" title="Modifica" onclick="openModificaCR('${cr.id}')"><span class="material-symbols-outlined">edit</span></button>
+        ${userProfile?.ruolo==='admin'?`<button class="btn-icon" title="Elimina" style="color:var(--red)" onclick="openElimina('${cr.id}')"><span class="material-symbols-outlined">delete</span></button>`:''}
       </td>
     </tr>`;
   }).join('');
 
-  const bulkCount = selectedCrs.size;
-
-  document.getElementById('page-content').innerHTML = `
+  document.getElementById('page-content').innerHTML=`
     <div class="table-wrap">
-      <div class="table-filters">
-        <div class="filter-bar">
-          <select class="filter-select" onchange="filtroStato=this.value;renderElenco()">
+      <div class="table-toolbar">
+        <div class="table-title"><span class="material-symbols-outlined">group</span>CR — ${annoAttivo}</div>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select class="fsel" onchange="filtroStato=this.value;rElenco()">
             <option value="tutti" ${filtroStato==='tutti'?'selected':''}>Tutti gli stati</option>
             <option value="verde" ${filtroStato==='verde'?'selected':''}>In regola</option>
             <option value="arancio" ${filtroStato==='arancio'?'selected':''}>In sospeso</option>
             <option value="rosso" ${filtroStato==='rosso'?'selected':''}>Inadempienti</option>
           </select>
-          <select class="filter-select" onchange="cambiaAnno(parseInt(this.value))">
-            ${[annoAttivo+1,annoAttivo,annoAttivo-1,annoAttivo-2].map(y => `<option value="${y}" ${y===annoAttivo?'selected':''}>${y}</option>`).join('')}
+          <select class="fsel" onchange="cambiaAnno(parseInt(this.value))">
+            ${[annoAttivo+1,annoAttivo,annoAttivo-1,annoAttivo-2].map(y=>`<option value="${y}" ${y===annoAttivo?'selected':''}>${y}</option>`).join('')}
           </select>
-          <span style="color:var(--text3);font-size:12px">${crFiltrati.length} CR trovati</span>
-        </div>
-        <div style="display:flex;gap:8px;margin-left:auto">
-          <button class="btn-s" onclick="esportaCSV()"><span class="material-symbols-outlined">download</span>CSV</button>
+          <button class="btn-ghost" onclick="esportaCSV()"><span class="material-symbols-outlined">download</span>CSV</button>
         </div>
       </div>
-      <div class="bulk-bar ${bulkCount>0?'visible':''}" id="bulk-bar">
-        <span class="bulk-count">${bulkCount} selezionati</span>
-        <button class="btn-s" style="font-size:12px" onclick="bulkSetAdempimento()">Imposta adempimento</button>
-        <button class="btn-s" style="font-size:12px" onclick="deselezionaTutti()">Deseleziona tutti</button>
+      <div class="bulk-bar ${selectedCrs.size>0?'show':''}" id="bulk-bar">
+        <span class="bulk-n">${selectedCrs.size} selezionati</span>
+        <button class="btn-ghost" style="font-size:12px" onclick="bulkAdem()"><span class="material-symbols-outlined">task_alt</span>Imposta adempimento</button>
+        <button class="btn-ghost" style="font-size:12px" onclick="deselAll()">Deseleziona</button>
       </div>
-      ${crFiltrati.length === 0 ? `<div class="empty-state"><span class="material-symbols-outlined">search_off</span><p>Nessun CR trovato con i filtri selezionati.</p></div>` : `
+      ${lista.length===0?`<div class="empty"><span class="material-symbols-outlined">search_off</span><p>Nessun CR trovato.</p></div>`:`
       <table>
-        <thead>
-          <tr>
-            <th><input type="checkbox" id="select-all" onchange="toggleSelectAll(this.checked)" style="cursor:pointer;accent-color:var(--accent)"></th>
-            <th>N. CR</th><th>Nome Cognome</th><th>Cod. Fiscale</th><th>Email</th><th>Stato</th><th>Ademp.</th><th>Azioni</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th><input type="checkbox" id="sel-all" onchange="selAll(this.checked)" style="cursor:pointer;accent-color:var(--blue)"></th>
+          <th>N. CR</th><th>Nome Cognome</th><th>Cod. Fiscale</th><th>Email</th><th>Stato</th><th>Adempimenti</th><th>Azioni</th>
+        </tr></thead>
         <tbody>${rows}</tbody>
       </table>`}
     </div>`;
 }
 
-function onGlobalSearch() {
-  filtroSearch = document.getElementById('global-search').value;
-  if (currentPage === 'elenco') renderElenco();
+function onSearch(){filtroSearch=document.getElementById('search-inp').value;if(currentPage==='elenco')rElenco();}
+function toggleSel(id,v){if(v)selectedCrs.add(id);else selectedCrs.delete(id);const b=document.getElementById('bulk-bar');if(b)b.classList.toggle('show',selectedCrs.size>0);const bc=document.querySelector('.bulk-n');if(bc)bc.textContent=`${selectedCrs.size} selezionati`;}
+function selAll(v){DB_CR.forEach(c=>{if(v)selectedCrs.add(c.id);else selectedCrs.delete(c.id);});rElenco();}
+function deselAll(){selectedCrs.clear();rElenco();}
+async function bulkAdem(){
+  if(!selectedCrs.size)return;
+  const adem=ADEM.map(d=>d.key);
+  const scelta=adem[0];
+  const key=window.prompt(`Chiave adempimento:\n${adem.join('\n')}`);
+  if(!key||!ADEM.find(d=>d.key===key)){showToast('Chiave non valida','err');return;}
+  for(const id of selectedCrs){await sb.from('adempimenti').upsert({cr_id:id,anno:annoAttivo,[key]:true},{onConflict:'cr_id,anno'});}
+  showToast(`"${key}" impostato su ${selectedCrs.size} CR`);
+  await loadAD();rElenco();
 }
+async function cambiaAnno(a){annoAttivo=a;document.getElementById('tb-anno').textContent=a;await loadAD();renderPage();}
 
-function toggleSelectCR(id, checked) {
-  if (checked) selectedCrs.add(id); else selectedCrs.delete(id);
-  document.getElementById('bulk-bar')?.classList.toggle('visible', selectedCrs.size > 0);
-  const countEl = document.querySelector('.bulk-count');
-  if (countEl) countEl.textContent = `${selectedCrs.size} selezionati`;
-}
-
-function toggleSelectAll(checked) {
-  DB_CR.forEach(cr => { if (checked) selectedCrs.add(cr.id); else selectedCrs.delete(cr.id); });
-  renderElenco();
-}
-
-function deselezionaTutti() { selectedCrs.clear(); renderElenco(); }
-
-async function bulkSetAdempimento() {
-  if (selectedCrs.size === 0) return;
-  const key = prompt('Chiave adempimento da impostare (es: quota_agefis):');
-  if (!key || !ADEMPIMENTI_DEF.find(d => d.key === key)) { showToast('Chiave non valida', 'err'); return; }
-  const ids = [...selectedCrs];
-  for (const crId of ids) {
-    await sb.from('adempimenti').upsert({ cr_id: crId, anno: annoAttivo, [key]: true }, { onConflict: 'cr_id,anno' });
-  }
-  showToast(`Adempimento "${key}" impostato su ${ids.length} CR`);
-  await loadAdempimenti();
-  renderElenco();
-}
-
-async function cambiaAnno(anno) {
-  annoAttivo = anno;
-  await loadAdempimenti();
-  renderCurrentPage();
-}
-
-/* ============================
+/* ════════════════════════════════════════
    SCHEDA CR
-============================ */
-async function openSchedaCR(crId) {
-  currentCrId = crId;
-  const cr = DB_CR.find(c => c.id === crId);
-  if (!cr) return;
-  const ad = DB_ADEMPIMENTI[crId] || {};
-  const stato = calcolaStato(ad, cr);
-  const ini = (cr.nome || 'C').charAt(0).toUpperCase();
+════════════════════════════════════════ */
+async function openScheda(crId) {
+  const cr=DB_CR.find(c=>c.id===crId);
+  if(!cr)return;
+  const ad=DB_AD[crId]||{};
+  const s=statoSemaforo(ad,cr);
+  const ini=(cr.nome||'C').charAt(0).toUpperCase();
 
-  document.getElementById('scheda-title').innerHTML = `Scheda CR — ${cr.cognome} ${cr.nome}`;
+  document.getElementById('scheda-title').textContent=`Scheda — ${cr.cognome} ${cr.nome}`;
 
-  // Adempimenti cards
-  const adCards = ADEMPIMENTI_DEF.map(def => {
-    const val = ad[def.key] || false;
-    const dataVal = ad[def.dataKey] || '';
-    const isComp = val;
-    const extraBustoni = def.key === 'bustoni' && val ? `
-      <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
-        <input type="checkbox" id="bustoni-inviati-${crId}" ${ad.bustoni_inviati?'checked':''} onchange="toggleBustoniInviati('${crId}',this.checked)" style="accent-color:var(--accent);cursor:pointer">
-        <label for="bustoni-inviati-${crId}" style="font-size:12px;color:var(--text2);cursor:pointer">Inviati</label>
-      </div>` : '';
-    return `
-    <div class="adem-card ${isComp?'completato':''} ${!def.obbligatorio&&!isComp?'facoltativo-nc':''}" id="acard-${def.key}">
-      <span class="info-btn" onmouseenter="showTooltip(event,'${def.tooltip}')" onmouseleave="hideTooltip()">
-        <span class="material-symbols-outlined" style="font-size:18px">info</span>
-      </span>
-      <div class="adem-card-header">
-        <div class="adem-title">${def.label}</div>
-        ${!def.obbligatorio ? '<span class="adem-badge-fac">Facoltativo</span>' : ''}
+  const ademCards=ADEM.map(def=>{
+    const val=ad[def.key]||false;
+    const dVal=ad[def.dk]||'';
+    const extra=def.key==='bustoni'&&val?`<div style="margin-top:8px;display:flex;align-items:center;gap:7px"><input type="checkbox" id="bust-inv" ${ad.bustoni_inviati?'checked':''} onchange="toggleBustoniInv('${crId}',this.checked)" style="accent-color:var(--blue);cursor:pointer"><label for="bust-inv" style="font-size:12px;color:var(--text2);cursor:pointer">Bustoni inviati</label></div>`:'';
+    return `<div class="adem-card ${val?'done':''} ${!def.ob&&!val?'opt-nc':''}" id="ac-${def.key}">
+      <span class="info-tip" onmouseenter="tipShow(event,'${def.tip}')" onmouseleave="tipHide()"><span class="material-symbols-outlined">info</span></span>
+      <div class="adem-top">
+        <div class="adem-name">${def.label}</div>
+        ${!def.ob?'<span class="adem-fac">Facoltativo</span>':''}
       </div>
-      <div class="adem-toggle-row">
-        <label class="big-toggle">
-          <input type="checkbox" ${val?'checked':''} onchange="toggleAdempimento('${crId}','${def.key}',this.checked,'${def.dataKey}')">
-          <div class="big-toggle-slider"></div>
+      <div class="adem-row">
+        <label class="big-sw">
+          <input type="checkbox" ${val?'checked':''} onchange="toggleAd('${crId}','${def.key}',this.checked,'${def.dk}')">
+          <div class="sw-track"></div>
         </label>
-        <span class="adem-status-text">${val ? 'Completato' : 'Non completato'}</span>
+        <span class="adem-status">${val?'Completato':'Non completato'}</span>
       </div>
-      <div class="adem-date-row ${val?'visible':''}" id="adrow-${def.key}">
+      <div class="adem-date ${val?'show':''}" id="ad-${def.key}">
         <label>Data ricezione</label>
-        <input type="date" value="${dataVal}" onchange="salvaData('${crId}','${def.dataKey}',this.value)">
+        <input type="date" value="${dVal}" onchange="salvaData('${crId}','${def.dk}',this.value)">
       </div>
-      ${extraBustoni}
+      ${extra}
     </div>`;
   }).join('');
 
-  // Log
-  const { data: logs } = await sb.from('log_azioni').select('*').eq('cr_id', crId).order('created_at', { ascending: false }).limit(30);
-  const logHTML = (logs || []).length === 0 ? `<p style="color:var(--text3);font-size:12px">Nessuna azione registrata.</p>` :
-    (logs || []).map(l => `
-    <div class="log-item">
-      <span class="material-symbols-outlined log-icon">history</span>
-      <div style="flex:1">
-        <div style="display:flex;justify-content:space-between;margin-bottom:2px">
-          <span class="log-azione">${l.azione}</span>
-          <span class="log-time">${fmtDate(l.created_at)}</span>
-        </div>
-        <div class="log-dettaglio">${l.dettaglio || ''}</div>
-        ${l.utente ? `<div style="font-size:10px;color:var(--text3);margin-top:2px">${l.utente}</div>` : ''}
-      </div>
-    </div>`).join('');
+  const {data:logs}=await sb.from('log_azioni').select('*').eq('cr_id',crId).order('created_at',{ascending:false}).limit(25);
+  const logHTML=(logs||[]).length===0?'<p style="color:var(--text3);font-size:12px">Nessuna azione registrata.</p>':(logs||[]).map(l=>`<div class="log-item"><div class="log-ic"><span class="material-symbols-outlined">history</span></div><div style="flex:1"><div class="log-az">${l.azione}</div><div class="log-det">${l.dettaglio||''}</div>${l.utente?`<div style="font-size:10px;color:var(--text3);margin-top:1px">${l.utente}</div>`:''}</div><div class="log-t">${fmtDate(l.created_at)}</div></div>`).join('');
 
-  document.getElementById('scheda-body').innerHTML = `
-    <div class="cr-header-box">
-      <div class="cr-avatar-big">${ini}</div>
+  document.getElementById('scheda-body').innerHTML=`
+    <div class="scheda-head">
+      <div class="scheda-av">${ini}</div>
       <div>
-        <div class="cr-head-name">${cr.cognome} ${cr.nome}</div>
-        <div class="cr-head-num">CR ${cr.numero_cr} · ${cr.email || 'nessuna email'}</div>
-        <div style="margin-top:8px"><span class="badge badge-${stato}">${statoLabel(stato)}</span>${cr.stato !== 'attivo' ? `<span class="badge badge-rosso" style="margin-left:6px">${cr.stato}</span>` : ''}</div>
+        <div class="scheda-nome">${cr.cognome} ${cr.nome}</div>
+        <div class="scheda-num">CR ${cr.numero_cr} · ${cr.email||'nessuna email'}</div>
+        <div style="margin-top:8px"><span class="badge ${statoClass(s)}">${statoLabel(s)}</span></div>
       </div>
-      <div class="cr-head-actions">
-        <button class="btn-s" onclick="openModalModificaCR('${crId}')"><span class="material-symbols-outlined">edit</span>Modifica</button>
-        ${cr.stato === 'attivo' && userProfile?.ruolo === 'admin' ? `<button class="btn-s btn-danger" onclick="openModalRevoca('${crId}')"><span class="material-symbols-outlined">cancel</span>Revoca</button>` : ''}
-        ${cr.stato === 'revocato' && userProfile?.ruolo === 'admin' ? `<button class="btn-s" onclick="ripristinaCR('${crId}')"><span class="material-symbols-outlined">restore</span>Ripristina</button>` : ''}
+      <div class="scheda-acts">
+        <button class="scheda-btn" onclick="openModificaCR('${crId}')"><span class="material-symbols-outlined">edit</span>Modifica</button>
+        ${cr.stato==='attivo'&&userProfile?.ruolo==='admin'?`<button class="scheda-btn scheda-btn-danger" onclick="openRevoca('${crId}')"><span class="material-symbols-outlined">cancel</span>Revoca</button>`:''}
+        ${cr.stato==='revocato'&&userProfile?.ruolo==='admin'?`<button class="scheda-btn" onclick="ripristina('${crId}')"><span class="material-symbols-outlined">restore</span>Ripristina</button>`:''}
       </div>
     </div>
 
-    <div class="section-collapsible">
-      <div class="section-collapsible-header" onclick="toggleCollapsible(this)">
-        <span>Anagrafica</span>
-        <span class="material-symbols-outlined" style="font-size:20px">expand_more</span>
-      </div>
-      <div class="section-collapsible-body">
-        <div class="form-grid" style="margin-top:8px">
-          <div class="form-group"><label>Nome</label><input type="text" value="${cr.nome}" readonly></div>
-          <div class="form-group"><label>Cognome</label><input type="text" value="${cr.cognome}" readonly></div>
-          <div class="form-group"><label>Codice Fiscale</label><input type="text" value="${cr.codice_fiscale||''}" readonly></div>
-          <div class="form-group"><label>Numero CR</label><input type="text" value="${cr.numero_cr}" readonly></div>
-          <div class="form-group"><label>Email</label><input type="text" value="${cr.email||''}" readonly></div>
-          <div class="form-group"><label>Stato</label><input type="text" value="${cr.stato}" readonly></div>
-          ${cr.note ? `<div class="form-group full"><label>Note</label><textarea readonly>${cr.note}</textarea></div>` : ''}
+    <div style="padding:18px">
+      <div class="coll">
+        <div class="coll-head" onclick="toggleColl(this)">Anagrafica<span class="material-symbols-outlined">expand_more</span></div>
+        <div class="coll-body">
+          <div class="form-grid">
+            <div class="fg"><label>Nome</label><input type="text" value="${cr.nome}" readonly style="background:var(--surface2)"></div>
+            <div class="fg"><label>Cognome</label><input type="text" value="${cr.cognome}" readonly style="background:var(--surface2)"></div>
+            <div class="fg"><label>Codice Fiscale</label><input type="text" value="${cr.codice_fiscale||''}" readonly style="background:var(--surface2)"></div>
+            <div class="fg"><label>Numero CR</label><input type="text" value="${cr.numero_cr}" readonly style="background:var(--surface2)"></div>
+            <div class="fg"><label>Email</label><input type="text" value="${cr.email||''}" readonly style="background:var(--surface2)"></div>
+            <div class="fg"><label>Stato</label><input type="text" value="${cr.stato}" readonly style="background:var(--surface2)"></div>
+            ${cr.note?`<div class="fg full"><label>Note</label><textarea readonly style="background:var(--surface2)">${cr.note}</textarea></div>`:''}
+          </div>
         </div>
       </div>
-    </div>
 
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <div class="section-title"><span class="material-symbols-outlined">task_alt</span>Adempimenti ${annoAttivo}</div>
-    </div>
-    <div class="adem-grid">${adCards}</div>
-
-    <div class="section-collapsible" style="margin-top:20px">
-      <div class="section-collapsible-header" onclick="toggleCollapsible(this)">
-        <span>Log azioni</span>
-        <span class="material-symbols-outlined" style="font-size:20px">expand_more</span>
+      <div style="font-size:13px;font-weight:800;color:var(--text);margin:14px 0 0;display:flex;align-items:center;gap:7px">
+        <span class="material-symbols-outlined" style="font-size:17px;color:var(--blue)">task_alt</span>
+        Adempimenti ${annoAttivo}
       </div>
-      <div class="section-collapsible-body">${logHTML}</div>
+      <div class="adem-grid">${ademCards}</div>
+
+      <div class="coll" style="margin-top:16px">
+        <div class="coll-head" onclick="toggleColl(this)">Log azioni<span class="material-symbols-outlined">expand_more</span></div>
+        <div class="coll-body">${logHTML}</div>
+      </div>
     </div>`;
 
-  openModal('modal-scheda');
+  openOv('ov-scheda');
 }
 
-function toggleCollapsible(header) {
-  const body = header.nextElementSibling;
-  const icon = header.querySelector('.material-symbols-outlined');
+function toggleColl(head){
+  const body=head.nextElementSibling;
+  head.classList.toggle('open');
   body.classList.toggle('open');
-  icon.textContent = body.classList.contains('open') ? 'expand_less' : 'expand_more';
 }
 
-async function toggleAdempimento(crId, campo, valore, dataKey) {
-  const update = { cr_id: crId, anno: annoAttivo, [campo]: valore };
-  if (!valore) update[dataKey] = null;
-  const { error } = await sb.from('adempimenti').upsert(update, { onConflict: 'cr_id,anno' });
-  if (error) { showToast('Errore nel salvataggio', 'err'); return; }
+async function toggleAd(crId,key,val,dk){
+  const upd={cr_id:crId,anno:annoAttivo,[key]:val};
+  if(!val)upd[dk]=null;
+  const {error}=await sb.from('adempimenti').upsert(upd,{onConflict:'cr_id,anno'});
+  if(error){showToast('Errore','err');return;}
   showToast('Aggiornato ✓');
-  await logAzione(crId, `Modifica ${campo}`, `${campo} → ${valore}`);
-  await loadAdempimenti();
-  // aggiorna card UI inline
-  const card = document.getElementById(`acard-${campo}`);
-  if (card) {
-    card.classList.toggle('completato', valore);
-    const statusText = card.querySelector('.adem-status-text');
-    if (statusText) statusText.textContent = valore ? 'Completato' : 'Non completato';
-    const dateRow = document.getElementById(`adrow-${campo}`);
-    if (dateRow) dateRow.classList.toggle('visible', valore);
+  await logAz(crId,`Modifica ${key}`,`${key} → ${val}`);
+  await loadAD();
+  const card=document.getElementById(`ac-${key}`);
+  if(card){
+    card.classList.toggle('done',val);
+    card.classList.toggle('opt-nc',!val&&!ADEM.find(d=>d.key===key)?.ob);
+    const st=card.querySelector('.adem-status');
+    if(st)st.textContent=val?'Completato':'Non completato';
+    const dr=document.getElementById(`ad-${key}`);
+    if(dr)dr.classList.toggle('show',val);
   }
 }
-
-async function salvaData(crId, dataKey, valore) {
-  const { error } = await sb.from('adempimenti').upsert({ cr_id: crId, anno: annoAttivo, [dataKey]: valore || null }, { onConflict: 'cr_id,anno' });
-  if (error) showToast('Errore nel salvataggio', 'err');
-  else { showToast('Data salvata ✓'); await loadAdempimenti(); }
+async function salvaData(crId,dk,val){
+  await sb.from('adempimenti').upsert({cr_id:crId,anno:annoAttivo,[dk]:val||null},{onConflict:'cr_id,anno'});
+  showToast('Data salvata ✓');await loadAD();
+}
+async function toggleBustoniInv(crId,val){
+  await sb.from('adempimenti').upsert({cr_id:crId,anno:annoAttivo,bustoni_inviati:val},{onConflict:'cr_id,anno'});
+  showToast(val?'Bustoni inviati ✓':'Bustoni: non inviati');await loadAD();
 }
 
-async function toggleBustoniInviati(crId, val) {
-  await sb.from('adempimenti').upsert({ cr_id: crId, anno: annoAttivo, bustoni_inviati: val }, { onConflict: 'cr_id,anno' });
-  showToast(val ? 'Bustoni marcati come inviati ✓' : 'Bustoni: non inviati');
-  await loadAdempimenti();
+/* ════════════════════════════════════════
+   FORM CR
+════════════════════════════════════════ */
+function openNuovoCR(){
+  editingCrId=null;
+  document.getElementById('crform-title').textContent='Nuovo CR';
+  ['nome','cognome','cf','numero','email','note'].forEach(f=>{const el=document.getElementById(`cf-${f}`);if(el)el.value='';});
+  document.getElementById('cf-stato').value='attivo';
+  openOv('ov-crform');
 }
-
-/* ============================
-   FORM CR (nuovo/modifica)
-============================ */
-function openModalNuovoCR() {
-  editingCrId = null;
-  document.getElementById('crform-title').textContent = 'Nuovo CR';
-  ['nome','cognome','cf','numero','email','note'].forEach(f => { const el = document.getElementById(`crform-${f}`); if(el) el.value = ''; });
-  document.getElementById('crform-stato').value = 'attivo';
-  openModal('modal-cr-form');
+function openModificaCR(id){
+  editingCrId=id;
+  const cr=DB_CR.find(c=>c.id===id);if(!cr)return;
+  document.getElementById('crform-title').textContent='Modifica anagrafica CR';
+  document.getElementById('cf-nome').value=cr.nome||'';
+  document.getElementById('cf-cognome').value=cr.cognome||'';
+  document.getElementById('cf-cf').value=cr.codice_fiscale||'';
+  document.getElementById('cf-numero').value=cr.numero_cr||'';
+  document.getElementById('cf-email').value=cr.email||'';
+  document.getElementById('cf-stato').value=cr.stato||'attivo';
+  document.getElementById('cf-note').value=cr.note||'';
+  openOv('ov-crform');
 }
-
-function openModalModificaCR(crId) {
-  editingCrId = crId;
-  const cr = DB_CR.find(c => c.id === crId);
-  if (!cr) return;
-  document.getElementById('crform-title').textContent = 'Modifica anagrafica CR';
-  document.getElementById('crform-nome').value = cr.nome || '';
-  document.getElementById('crform-cognome').value = cr.cognome || '';
-  document.getElementById('crform-cf').value = cr.codice_fiscale || '';
-  document.getElementById('crform-numero').value = cr.numero_cr || '';
-  document.getElementById('crform-email').value = cr.email || '';
-  document.getElementById('crform-stato').value = cr.stato || 'attivo';
-  document.getElementById('crform-note').value = cr.note || '';
-  openModal('modal-cr-form');
-}
-
-async function salvaFormCR() {
-  const nome = document.getElementById('crform-nome').value.trim();
-  const cognome = document.getElementById('crform-cognome').value.trim();
-  const numero = document.getElementById('crform-numero').value.trim();
-  if (!nome || !cognome || !numero) { showToast('Compila i campi obbligatori (Nome, Cognome, Numero CR)', 'err'); return; }
-  const payload = {
-    nome, cognome,
-    codice_fiscale: document.getElementById('crform-cf').value.trim().toUpperCase() || null,
-    numero_cr: numero,
-    email: document.getElementById('crform-email').value.trim() || null,
-    stato: document.getElementById('crform-stato').value,
-    note: document.getElementById('crform-note').value.trim() || null,
-  };
+async function salvaFormCR(){
+  const nome=document.getElementById('cf-nome').value.trim();
+  const cognome=document.getElementById('cf-cognome').value.trim();
+  const numero=document.getElementById('cf-numero').value.trim();
+  if(!nome||!cognome||!numero){showToast('Compila i campi obbligatori','err');return;}
+  const payload={nome,cognome,codice_fiscale:document.getElementById('cf-cf').value.trim().toUpperCase()||null,numero_cr:numero,email:document.getElementById('cf-email').value.trim()||null,stato:document.getElementById('cf-stato').value,note:document.getElementById('cf-note').value.trim()||null};
   let error;
-  if (editingCrId) {
-    ({ error } = await sb.from('cr').update(payload).eq('id', editingCrId));
-    if (!error) await logAzione(editingCrId, 'Modifica anagrafica', `Aggiornato ${nome} ${cognome}`);
+  if(editingCrId){
+    ({error}=await sb.from('cr').update(payload).eq('id',editingCrId));
+    if(!error)await logAz(editingCrId,'Modifica anagrafica',`Aggiornato ${nome} ${cognome}`);
   } else {
-    const { error: e, data } = await sb.from('cr').insert(payload).select().single();
-    error = e;
-    if (!e && data) await logAzione(data.id, 'Inserimento CR', `Nuovo CR ${nome} ${cognome} — ${numero}`);
+    const {error:e,data}=await sb.from('cr').insert(payload).select().single();
+    error=e;
+    if(!e&&data)await logAz(data.id,'Inserimento CR',`Nuovo CR ${nome} ${cognome} — ${numero}`);
   }
-  if (error) { showToast('Errore: ' + (error.message || 'sconosciuto'), 'err'); return; }
-  showToast(editingCrId ? 'CR aggiornato ✓' : 'CR aggiunto ✓');
-  closeModal('modal-cr-form');
-  await loadCR();
-  renderCurrentPage();
+  if(error){showToast('Errore: '+(error.message||''),'err');return;}
+  showToast(editingCrId?'CR aggiornato ✓':'CR aggiunto ✓');
+  closeModal('ov-crform');
+  await loadCR();renderPage();
 }
 
-/* ============================
-   REVOCA / ELIMINA
-============================ */
-function openModalRevoca(crId) {
-  revocaCrId = crId;
-  const cr = DB_CR.find(c => c.id === crId);
-  document.getElementById('revoca-nome').textContent = cr ? `${cr.cognome} ${cr.nome}` : '';
-  document.getElementById('revoca-motivo').value = '';
-  openModal('modal-revoca');
+/* ════════════════════════════════════════
+   REVOCA / ELIMINA / RIPRISTINO
+════════════════════════════════════════ */
+function openRevoca(id){
+  revocaCrId=id;
+  const cr=DB_CR.find(c=>c.id===id);
+  document.getElementById('rev-nome').textContent=cr?`${cr.cognome} ${cr.nome}`:'';
+  document.getElementById('rev-motivo').value='';
+  openOv('ov-revoca');
 }
-
-async function confermaRevoca() {
-  const motivo = document.getElementById('revoca-motivo').value.trim();
-  if (!motivo) { showToast('Specifica il motivo della revoca', 'err'); return; }
-  const { error } = await sb.from('cr').update({ stato: 'revocato' }).eq('id', revocaCrId);
-  if (error) { showToast('Errore', 'err'); return; }
-  await logAzione(revocaCrId, 'Revoca CR', motivo);
+async function confermaRevoca(){
+  const motivo=document.getElementById('rev-motivo').value.trim();
+  if(!motivo){showToast('Specifica il motivo','err');return;}
+  await sb.from('cr').update({stato:'revocato'}).eq('id',revocaCrId);
+  await logAz(revocaCrId,'Revoca CR',motivo);
   showToast('CR revocato');
-  closeModal('modal-revoca');
-  closeModal('modal-scheda');
-  await loadCR();
-  renderCurrentPage();
+  closeModal('ov-revoca');closeModal('ov-scheda');
+  await loadCR();renderPage();
+}
+async function ripristina(id){
+  await sb.from('cr').update({stato:'attivo'}).eq('id',id);
+  await logAz(id,'Ripristino CR','Stato ripristinato ad attivo');
+  showToast('CR ripristinato ✓');closeModal('ov-scheda');await loadCR();renderPage();
+}
+function openElimina(id){
+  eliminaCrId=id;
+  const cr=DB_CR.find(c=>c.id===id);
+  document.getElementById('el-nome').textContent=cr?`${cr.cognome} ${cr.nome}`:'';
+  openOv('ov-elimina');
+}
+async function confermaElimina(){
+  await sb.from('cr').delete().eq('id',eliminaCrId);
+  showToast('CR eliminato');closeModal('ov-elimina');closeModal('ov-scheda');
+  await loadCR();await loadAD();renderPage();
 }
 
-async function ripristinaCR(crId) {
-  const { error } = await sb.from('cr').update({ stato: 'attivo' }).eq('id', crId);
-  if (error) { showToast('Errore', 'err'); return; }
-  await logAzione(crId, 'Ripristino CR', 'Stato ripristinato ad attivo');
-  showToast('CR ripristinato ✓');
-  closeModal('modal-scheda');
-  await loadCR();
-  renderCurrentPage();
-}
-
-function openModalElimina(crId) {
-  eliminaCrId = crId;
-  const cr = DB_CR.find(c => c.id === crId);
-  document.getElementById('elimina-nome').textContent = cr ? `${cr.cognome} ${cr.nome}` : '';
-  openModal('modal-elimina');
-}
-
-async function confermaElimina() {
-  const { error } = await sb.from('cr').delete().eq('id', eliminaCrId);
-  if (error) { showToast('Errore eliminazione', 'err'); return; }
-  showToast('CR eliminato');
-  closeModal('modal-elimina');
-  closeModal('modal-scheda');
-  await loadCR(); await loadAdempimenti();
-  renderCurrentPage();
-}
-
-/* ============================
-   IMPORT
-============================ */
-function renderImporta() {
-  document.getElementById('page-content').innerHTML = `
+/* ════════════════════════════════════════
+   IMPORTA
+════════════════════════════════════════ */
+let csvData=[];
+function rImporta(){
+  document.getElementById('page-content').innerHTML=`
     <div class="tab-bar">
-      <button class="tab-btn active" id="tab-csv" onclick="switchTab('csv')"><span class="material-symbols-outlined">upload_file</span>Importa CSV</button>
-      <button class="tab-btn" id="tab-nuovo" onclick="switchTab('nuovo')"><span class="material-symbols-outlined">person_add</span>Nuovo CR manuale</button>
-      <button class="tab-btn" id="tab-revoche" onclick="switchTab('revoche')"><span class="material-symbols-outlined">block</span>Gestione revoche</button>
+      <div class="tab-btn active" id="tbi-csv" onclick="switchTab('csv')"><span class="material-symbols-outlined">upload_file</span>Importa CSV</div>
+      <div class="tab-btn" id="tbi-new" onclick="switchTab('new')"><span class="material-symbols-outlined">person_add</span>Inserimento manuale</div>
+      <div class="tab-btn" id="tbi-rev" onclick="switchTab('rev')"><span class="material-symbols-outlined">block</span>Revoche</div>
     </div>
-    <div class="tab-content active" id="tc-csv">${renderImportCSV()}</div>
-    <div class="tab-content" id="tc-nuovo">${renderNuovoCRInline()}</div>
-    <div class="tab-content" id="tc-revoche">${renderRevoche()}</div>`;
+    <div class="tab-pane active" id="tp-csv">${tpCSV()}</div>
+    <div class="tab-pane" id="tp-new">${tpNew()}</div>
+    <div class="tab-pane" id="tp-rev">${tpRev()}</div>`;
 }
-
-function switchTab(tab) {
-  ['csv','nuovo','revoche'].forEach(t => {
-    document.getElementById(`tab-${t}`)?.classList.toggle('active', t === tab);
-    document.getElementById(`tc-${t}`)?.classList.toggle('active', t === tab);
+function switchTab(t){
+  ['csv','new','rev'].forEach(k=>{
+    document.getElementById(`tbi-${k}`)?.classList.toggle('active',k===t);
+    document.getElementById(`tp-${k}`)?.classList.toggle('active',k===t);
   });
 }
-
-function renderImportCSV() {
-  return `
-  <div style="max-width:700px">
-    <div class="section-card" style="margin-bottom:16px">
-      <div class="section-title"><span class="material-symbols-outlined">info</span>Formato atteso</div>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:8px">Il file CSV deve avere le seguenti colonne (intestazione obbligatoria):</p>
-      <code style="background:var(--bg3);padding:10px 14px;border-radius:var(--r);display:block;font-size:12px;color:var(--text)">nome,cognome,codice_fiscale,numero_cr,email</code>
+function tpCSV(){return `
+  <div style="max-width:660px">
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-head"><div class="card-title"><span class="material-symbols-outlined">info</span>Formato CSV</div></div>
+      <div class="card-body">
+        <p style="font-size:13px;color:var(--text2);margin-bottom:8px">Intestazione richiesta (prima riga):</p>
+        <code style="background:var(--surface2);border:1px solid var(--border);padding:9px 13px;border-radius:8px;display:block;font-size:12px">nome,cognome,codice_fiscale,numero_cr,email</code>
+      </div>
     </div>
-    <div class="dropzone" id="dropzone" onclick="document.getElementById('csv-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+    <div class="dropzone" id="dzone" onclick="document.getElementById('csv-in').click()" ondragover="dzOver(event)" ondragleave="dzLeave(event)" ondrop="dzDrop(event)">
       <span class="material-symbols-outlined">cloud_upload</span>
-      <p>Trascina il file CSV qui oppure <strong>clicca per sfogliare</strong></p>
-      <input type="file" id="csv-input" accept=".csv" style="display:none" onchange="onCSVChange(event)">
+      <p>Trascina il CSV qui oppure <strong>clicca per sfogliare</strong></p>
+      <input type="file" id="csv-in" accept=".csv" style="display:none" onchange="parseCSV(event.target.files[0])">
     </div>
-    <div id="csv-options" style="display:none;margin-top:16px">
-      <div class="section-card">
-        <div style="margin-bottom:12px">
-          <label class="check-toggle">
-            <input type="checkbox" id="csv-agefis" style="accent-color:var(--accent)">
-            <span style="font-size:13px;font-weight:500">Imposta quota Agefis come pagata per tutti i CR importati</span>
-          </label>
-        </div>
-        <div id="csv-agefis-eccezioni-row" style="margin-left:26px;margin-top:8px;display:none">
-          <div class="form-group">
-            <label>Eccezioni (numeri CR separati da virgola)</label>
-            <input type="text" id="csv-agefis-eccezioni" placeholder="es: CR001, CR045, CR123">
+    <div id="csv-opts" style="display:none;margin-top:16px">
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-body">
+          <div style="margin-bottom:12px">
+            <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;font-weight:600">
+              <input type="checkbox" id="opt-agefis" style="accent-color:var(--blue)">
+              Imposta quota Agefis come pagata per tutti
+            </label>
+          </div>
+          <div id="agefis-eccezioni" style="display:none;margin-left:26px">
+            <div class="fg"><label>Eccezioni (numeri CR separati da virgola)</label><input type="text" id="agefis-exc" placeholder="es: CR001, CR045"></div>
+          </div>
+          <div style="margin-top:12px">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:7px">Se CR già esistente</div>
+            <div style="display:flex;gap:14px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="radio" name="dup" value="update" checked style="accent-color:var(--blue)">Aggiorna</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="radio" name="dup" value="skip" style="accent-color:var(--blue)">Salta</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="radio" name="dup" value="error" style="accent-color:var(--blue)">Segnala</label>
+            </div>
           </div>
         </div>
-        <div style="margin-top:12px">
-          <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);display:block;margin-bottom:6px">Se CR già esistente (stesso numero_cr)</label>
-          <div style="display:flex;gap:10px">
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="radio" name="dup-policy" value="update" checked style="accent-color:var(--accent)"> Aggiorna</label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="radio" name="dup-policy" value="skip" style="accent-color:var(--accent)"> Salta</label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="radio" name="dup-policy" value="error" style="accent-color:var(--accent)"> Segnala conflitto</label>
-          </div>
+      </div>
+      <div id="csv-preview" style="border:1px solid var(--border);border-radius:var(--r);overflow:auto;max-height:240px;margin-bottom:14px"></div>
+      <button class="btn-blue" onclick="eseguiImport()"><span class="material-symbols-outlined">upload</span>Importa</button>
+    </div>
+    <div id="imp-res" style="margin-top:14px"></div>
+  </div>`;}
+function tpNew(){return `
+  <div style="max-width:560px">
+    <div class="card">
+      <div class="card-head"><div class="card-title"><span class="material-symbols-outlined">person_add</span>Inserimento manuale</div></div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="fg"><label>Nome *</label><input type="text" id="n-nome"></div>
+          <div class="fg"><label>Cognome *</label><input type="text" id="n-cognome"></div>
+          <div class="fg"><label>Codice Fiscale</label><input type="text" id="n-cf" style="text-transform:uppercase"></div>
+          <div class="fg"><label>Numero CR *</label><input type="text" id="n-numero"></div>
+          <div class="fg full"><label>Email</label><input type="email" id="n-email"></div>
+          <div class="fg full"><label>Note</label><textarea id="n-note" rows="3"></textarea></div>
         </div>
-      </div>
-      <div id="csv-preview" class="preview-table-wrap" style="margin-bottom:16px"></div>
-      <button class="btn-p" onclick="eseguiImport()"><span class="material-symbols-outlined">upload</span>Importa</button>
-    </div>
-    <div id="import-results" style="margin-top:16px"></div>
-  </div>`;
-}
-
-function renderNuovoCRInline() {
-  return `
-  <div style="max-width:600px">
-    <div class="section-card">
-      <div class="section-title"><span class="material-symbols-outlined">person_add</span>Inserimento manuale CR</div>
-      <div class="form-grid">
-        <div class="form-group"><label>Nome *</label><input type="text" id="inline-nome"></div>
-        <div class="form-group"><label>Cognome *</label><input type="text" id="inline-cognome"></div>
-        <div class="form-group"><label>Codice Fiscale</label><input type="text" id="inline-cf" style="text-transform:uppercase"></div>
-        <div class="form-group"><label>Numero CR *</label><input type="text" id="inline-numero"></div>
-        <div class="form-group full"><label>Email</label><input type="email" id="inline-email"></div>
-        <div class="form-group full"><label>Note</label><textarea id="inline-note" rows="3"></textarea></div>
-      </div>
-      <div style="margin-top:16px">
-        <button class="btn-p" onclick="salvaInlineCR()"><span class="material-symbols-outlined">save</span>Aggiungi CR</button>
+        <button class="btn-blue" style="margin-top:14px" onclick="salvaNuovoCRInline()"><span class="material-symbols-outlined">save</span>Aggiungi CR</button>
       </div>
     </div>
-  </div>`;
-}
+  </div>`;}
+function tpRev(){
+  const rev=DB_CR.filter(c=>c.stato==='revocato'||c.stato==='non_rinnova');
+  if(!rev.length)return `<div class="empty"><span class="material-symbols-outlined">check_circle</span><p>Nessun CR revocato o non rinnovante.</p></div>`;
+  return `<div class="table-wrap"><table><thead><tr><th>Nome</th><th>Numero CR</th><th>Stato</th><th>Azione</th></tr></thead><tbody>${rev.map(cr=>`<tr><td class="td-name">${cr.cognome} ${cr.nome}</td><td class="td-mono">${cr.numero_cr}</td><td><span class="badge b-red">${cr.stato}</span></td><td><button class="btn-ghost" style="font-size:12px" onclick="ripristina('${cr.id}')"><span class="material-symbols-outlined" style="font-size:15px">restore</span>Ripristina</button></td></tr>`).join('')}</tbody></table></div>`;}
 
-async function salvaInlineCR() {
-  const nome = document.getElementById('inline-nome')?.value.trim();
-  const cognome = document.getElementById('inline-cognome')?.value.trim();
-  const numero = document.getElementById('inline-numero')?.value.trim();
-  if (!nome || !cognome || !numero) { showToast('Compila i campi obbligatori', 'err'); return; }
-  const payload = { nome, cognome, numero_cr: numero, email: document.getElementById('inline-email')?.value.trim() || null, codice_fiscale: document.getElementById('inline-cf')?.value.trim().toUpperCase() || null, note: document.getElementById('inline-note')?.value.trim() || null };
-  const { error, data } = await sb.from('cr').insert(payload).select().single();
-  if (error) { showToast('Errore: ' + (error.message || ''), 'err'); return; }
-  await logAzione(data.id, 'Inserimento CR', `Nuovo CR ${nome} ${cognome} — ${numero}`);
+function dzOver(e){e.preventDefault();document.getElementById('dzone').classList.add('over');}
+function dzLeave(){document.getElementById('dzone').classList.remove('over');}
+function dzDrop(e){e.preventDefault();dzLeave();const f=e.dataTransfer.files[0];if(f)parseCSV(f);}
+function parseCSV(file){
+  const r=new FileReader();
+  r.onload=ev=>{
+    const lines=ev.target.result.trim().split('\n').map(l=>l.split(',').map(v=>v.trim().replace(/^"|"$/g,'')));
+    if(lines.length<2){showToast('CSV non valido','err');return;}
+    const hd=lines[0].map(h=>h.toLowerCase());
+    csvData=lines.slice(1).map(row=>{const o={};hd.forEach((h,i)=>o[h]=row[i]||'');return o;}).filter(r=>r.nome||r.cognome);
+    const pr=document.getElementById('csv-preview');
+    const rows=csvData.slice(0,8).map(r=>`<tr>${hd.map(h=>`<td style="padding:6px 12px;font-size:12px;border-bottom:1px solid var(--border)">${r[h]||''}</td>`).join('')}</tr>`).join('');
+    pr.innerHTML=`<table style="width:100%"><thead style="background:var(--surface2)"><tr>${hd.map(h=>`<th style="padding:7px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)">${h}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table><p style="font-size:11px;color:var(--text3);padding:6px 12px">${csvData.length} righe${csvData.length>8?' (preview prime 8)':''}</p>`;
+    document.getElementById('csv-opts').style.display='block';
+    document.getElementById('opt-agefis').addEventListener('change',e=>{document.getElementById('agefis-eccezioni').style.display=e.target.checked?'block':'none';});
+  };
+  r.readAsText(file,'utf-8');
+}
+async function eseguiImport(){
+  if(!csvData.length)return;
+  const agefis=document.getElementById('opt-agefis')?.checked;
+  const exc=(document.getElementById('agefis-exc')?.value||'').split(',').map(v=>v.trim().toUpperCase()).filter(Boolean);
+  const dup=document.querySelector('input[name="dup"]:checked')?.value||'update';
+  const res=[];
+  for(const row of csvData){
+    const num=(row.numero_cr||'').trim();
+    if(!num){res.push({t:'err',m:`Senza numero CR: ${row.nome} ${row.cognome}`});continue;}
+    const ex=DB_CR.find(c=>c.numero_cr===num);
+    if(ex&&dup==='skip'){res.push({t:'skip',m:`Saltato: ${num}`});continue;}
+    if(ex&&dup==='error'){res.push({t:'err',m:`Conflitto: ${num}`});continue;}
+    const p={nome:row.nome,cognome:row.cognome,codice_fiscale:row.codice_fiscale?.toUpperCase()||null,numero_cr:num,email:row.email||null};
+    let crId;
+    if(ex){await sb.from('cr').update(p).eq('id',ex.id);crId=ex.id;res.push({t:'ok',m:`Aggiornato: ${row.cognome} ${row.nome} (${num})`});}
+    else{const {data,error}=await sb.from('cr').insert(p).select().single();if(error){res.push({t:'err',m:`Errore ${num}: ${error.message}`});continue;}crId=data.id;res.push({t:'ok',m:`Inserito: ${row.cognome} ${row.nome} (${num})`});}
+    if(agefis&&!exc.includes(num.toUpperCase())){await sb.from('adempimenti').upsert({cr_id:crId,anno:annoAttivo,quota_agefis:true},{onConflict:'cr_id,anno'});}
+  }
+  await loadCR();await loadAD();
+  const re=document.getElementById('imp-res');
+  if(re)re.innerHTML=res.map(r=>`<div class="imp-row ${r.t}"><span class="material-symbols-outlined">${r.t==='ok'?'check_circle':r.t==='skip'?'skip_next':'error'}</span>${r.m}</div>`).join('');
+  showToast(`Import: ${res.filter(r=>r.t==='ok').length} ok, ${res.filter(r=>r.t==='skip').length} saltati, ${res.filter(r=>r.t==='err').length} errori`);
+}
+async function salvaNuovoCRInline(){
+  const nome=document.getElementById('n-nome')?.value.trim();
+  const cognome=document.getElementById('n-cognome')?.value.trim();
+  const numero=document.getElementById('n-numero')?.value.trim();
+  if(!nome||!cognome||!numero){showToast('Campi obbligatori mancanti','err');return;}
+  const {error,data}=await sb.from('cr').insert({nome,cognome,numero_cr:numero,email:document.getElementById('n-email')?.value.trim()||null,codice_fiscale:document.getElementById('n-cf')?.value.trim().toUpperCase()||null,note:document.getElementById('n-note')?.value.trim()||null}).select().single();
+  if(error){showToast('Errore: '+error.message,'err');return;}
+  await logAz(data.id,'Inserimento CR',`${nome} ${cognome} — ${numero}`);
   showToast('CR aggiunto ✓');
-  ['inline-nome','inline-cognome','inline-cf','inline-numero','inline-email','inline-note'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  ['n-nome','n-cognome','n-cf','n-numero','n-email','n-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   await loadCR();
 }
 
-function renderRevoche() {
-  const revocati = DB_CR.filter(c => c.stato === 'revocato' || c.stato === 'non_rinnova');
-  if (revocati.length === 0) return `<div class="empty-state"><span class="material-symbols-outlined">check_circle</span><p>Nessun CR revocato o non rinnovante.</p></div>`;
-  return `
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>Nome</th><th>Numero CR</th><th>Stato</th><th>Azione</th></tr></thead>
-      <tbody>${revocati.map(cr => `
-      <tr>
-        <td class="td-name">${cr.cognome} ${cr.nome}</td>
-        <td class="td-code">${cr.numero_cr}</td>
-        <td><span class="badge badge-rosso">${cr.stato}</span></td>
-        <td><button class="btn-s" style="font-size:12px" onclick="ripristinaCR('${cr.id}')"><span class="material-symbols-outlined" style="font-size:16px">restore</span>Ripristina</button></td>
-      </tr>`).join('')}
-      </tbody>
-    </table>
-  </div>`;
-}
-
-// CSV IMPORT
-let csvData = [];
-function onDragOver(e) { e.preventDefault(); document.getElementById('dropzone').classList.add('drag-over'); }
-function onDragLeave(e) { document.getElementById('dropzone').classList.remove('drag-over'); }
-function onDrop(e) { e.preventDefault(); document.getElementById('dropzone').classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if(f) parseCSV(f); }
-function onCSVChange(e) { const f = e.target.files[0]; if(f) parseCSV(f); }
-
-function parseCSV(file) {
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const text = ev.target.result;
-    const lines = text.trim().split('\n').map(l => l.split(',').map(v => v.trim().replace(/^"|"$/g,'')));
-    if (lines.length < 2) { showToast('File CSV vuoto o non valido', 'err'); return; }
-    const headers = lines[0].map(h => h.toLowerCase());
-    csvData = lines.slice(1).map(row => {
-      const obj = {};
-      headers.forEach((h,i) => obj[h] = row[i] || '');
-      return obj;
-    }).filter(r => r.nome || r.cognome);
-    showCSVPreview(headers, csvData);
-    document.getElementById('csv-options').style.display = 'block';
-    document.getElementById('csv-agefis').addEventListener('change', e => {
-      document.getElementById('csv-agefis-eccezioni-row').style.display = e.target.checked ? 'block' : 'none';
-    });
-  };
-  reader.readAsText(file, 'utf-8');
-}
-
-function showCSVPreview(headers, data) {
-  const preview = document.getElementById('csv-preview');
-  const rows = data.slice(0,10).map(r => `<tr>${headers.map(h => `<td style="padding:6px 12px;font-size:12px;border-bottom:1px solid var(--border)">${r[h]||''}</td>`).join('')}</tr>`).join('');
-  preview.innerHTML = `
-    <table style="width:100%">
-      <thead style="background:var(--bg3)"><tr>${headers.map(h=>`<th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3)">${h}</th>`).join('')}</tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <p style="font-size:11px;color:var(--text3);padding:8px 12px">${data.length > 10 ? `Mostrando 10 di ${data.length} righe.` : `${data.length} righe.`}</p>`;
-}
-
-async function eseguiImport() {
-  if (!csvData.length) return;
-  const agefis = document.getElementById('csv-agefis')?.checked;
-  const eccezioni = (document.getElementById('csv-agefis-eccezioni')?.value || '').split(',').map(v => v.trim().toUpperCase()).filter(Boolean);
-  const dupPolicy = document.querySelector('input[name="dup-policy"]:checked')?.value || 'update';
-  const results = [];
-  for (const row of csvData) {
-    const numero = (row.numero_cr || '').trim();
-    if (!numero) { results.push({ tipo: 'err', msg: `Riga senza numero CR: ${row.nome} ${row.cognome}` }); continue; }
-    const esistente = DB_CR.find(c => c.numero_cr === numero);
-    if (esistente && dupPolicy === 'skip') { results.push({ tipo: 'skip', msg: `Saltato (già esistente): ${numero}` }); continue; }
-    if (esistente && dupPolicy === 'error') { results.push({ tipo: 'err', msg: `Conflitto (già esistente): ${numero}` }); continue; }
-    const payload = { nome: row.nome, cognome: row.cognome, codice_fiscale: row.codice_fiscale?.toUpperCase() || null, numero_cr: numero, email: row.email || null };
-    let crId;
-    if (esistente) {
-      await sb.from('cr').update(payload).eq('id', esistente.id);
-      crId = esistente.id;
-      results.push({ tipo: 'ok', msg: `Aggiornato: ${row.cognome} ${row.nome} (${numero})` });
-    } else {
-      const { data, error } = await sb.from('cr').insert(payload).select().single();
-      if (error) { results.push({ tipo: 'err', msg: `Errore inserimento ${numero}: ${error.message}` }); continue; }
-      crId = data.id;
-      results.push({ tipo: 'ok', msg: `Inserito: ${row.cognome} ${row.nome} (${numero})` });
-    }
-    if (agefis && !eccezioni.includes(numero.toUpperCase())) {
-      await sb.from('adempimenti').upsert({ cr_id: crId, anno: annoAttivo, quota_agefis: true }, { onConflict: 'cr_id,anno' });
-    }
-  }
-  await loadCR(); await loadAdempimenti();
-  const resultsEl = document.getElementById('import-results');
-  if (resultsEl) {
-    resultsEl.innerHTML = results.map(r => `
-    <div class="import-row ${r.tipo}">
-      <span class="material-symbols-outlined">${r.tipo==='ok'?'check_circle':r.tipo==='skip'?'skip_next':'error'}</span>
-      ${r.msg}
-    </div>`).join('');
-  }
-  showToast(`Import completato: ${results.filter(r=>r.tipo==='ok').length} OK, ${results.filter(r=>r.tipo==='skip').length} saltati, ${results.filter(r=>r.tipo==='err').length} errori`);
-}
-
-/* ============================
-   REPORT / EXPORT
-============================ */
-function renderReport() {
-  document.getElementById('page-content').innerHTML = `
-    <div class="report-card">
-      <span class="material-symbols-outlined">download</span>
-      <div class="report-card-info">
-        <div class="report-card-title">Export CSV completo</div>
-        <div class="report-card-sub">Tutti i CR con tutti gli adempimenti dell'anno ${annoAttivo}</div>
-      </div>
-      <button class="btn-p" onclick="esportaCSV()"><span class="material-symbols-outlined">download</span>Scarica</button>
-    </div>
-    <div class="report-card">
-      <span class="material-symbols-outlined" style="color:var(--orange)">warning</span>
-      <div class="report-card-info">
-        <div class="report-card-title">Export CSV "Da sollecitare"</div>
-        <div class="report-card-sub">Solo CR in sospeso o inadempienti con colonna "cosa manca"</div>
-      </div>
-      <button class="btn-p" onclick="esportaCSVSollecitare()"><span class="material-symbols-outlined">download</span>Scarica</button>
-    </div>
-    <div class="report-card">
-      <span class="material-symbols-outlined" style="color:var(--green)">picture_as_pdf</span>
-      <div class="report-card-info">
-        <div class="report-card-title">Report PDF sommario</div>
-        <div class="report-card-sub">Riepilogo adempimenti ${annoAttivo} formattato per stampa</div>
-      </div>
-      <button class="btn-p" onclick="stampaPDF()"><span class="material-symbols-outlined">print</span>Stampa / PDF</button>
-    </div>
-    <div class="section-card">
-      <div class="section-title"><span class="material-symbols-outlined">analytics</span>Riepilogo ${annoAttivo}</div>
-      ${renderRiepilogoTable()}
-    </div>`;
-}
-
-function renderRiepilogoTable() {
-  const crAttivi = DB_CR.filter(c => c.stato === 'attivo');
-  const rows = ADEMPIMENTI_DEF.map(d => {
-    const count = crAttivi.filter(cr => DB_ADEMPIMENTI[cr.id] && DB_ADEMPIMENTI[cr.id][d.key]).length;
-    const pct = crAttivi.length ? Math.round(count / crAttivi.length * 100) : 0;
-    const bar = `<div style="height:6px;border-radius:3px;background:var(--bg4);margin-top:4px"><div style="height:100%;width:${pct}%;border-radius:3px;background:${pct>=80?'var(--green)':pct>=40?'var(--orange)':'var(--red)'}"></div></div>`;
-    return `<tr><td>${d.label}${d.obbligatorio?'':' <span class="badge-gray badge" style="font-size:9px">Facoltativo</span>'}</td><td style="font-weight:600;color:var(--text)">${count}/${crAttivi.length}</td><td style="width:120px;font-weight:700;color:${pct>=80?'var(--green)':pct>=40?'var(--orange)':'var(--red)'}">${pct}%${bar}</td></tr>`;
+/* ════════════════════════════════════════
+   REPORT
+════════════════════════════════════════ */
+function rReport(){
+  const att=DB_CR.filter(c=>c.stato==='attivo');
+  const rows=ADEM.map(d=>{
+    const cnt=att.filter(cr=>DB_AD[cr.id]?.[d.key]).length;
+    const pct=att.length?Math.round(cnt/att.length*100):0;
+    const cl=pct>=80?'green':pct>=40?'orange':'red';
+    return `<tr><td>${d.label}${d.ob?'':' <span class="badge b-gray" style="font-size:9px">Facoltativo</span>'}</td><td style="font-weight:700;color:var(--text)">${cnt}/${att.length}</td><td><div class="prog-wrap" style="gap:10px"><div class="prog-bar"><div class="prog-fill ${cl}" style="width:${pct}%"></div></div><span class="prog-text" style="color:var(--${cl});min-width:36px">${pct}%</span></div></td></tr>`;
   }).join('');
-  return `<table><thead><tr><th>Adempimento</th><th>Completati</th><th>% Completamento</th></tr></thead><tbody>${rows}</tbody></table>`;
+  document.getElementById('page-content').innerHTML=`
+    <div class="rep-card"><div class="rep-icon"><span class="material-symbols-outlined">download</span></div><div class="rep-info"><div class="rep-title">Export CSV completo</div><div class="rep-sub">Tutti i CR con tutti gli adempimenti — anno ${annoAttivo}</div></div><button class="btn-blue" onclick="esportaCSV()"><span class="material-symbols-outlined">download</span>Scarica</button></div>
+    <div class="rep-card"><div class="rep-icon"><span class="material-symbols-outlined" style="color:var(--orange)">warning</span></div><div class="rep-info"><div class="rep-title">Export CSV "Da sollecitare"</div><div class="rep-sub">Solo CR non in regola con colonna "cosa manca"</div></div><button class="btn-blue" onclick="esportaCSVSoll()"><span class="material-symbols-outlined">download</span>Scarica</button></div>
+    <div class="rep-card"><div class="rep-icon"><span class="material-symbols-outlined" style="color:var(--green)">picture_as_pdf</span></div><div class="rep-info"><div class="rep-title">Report PDF</div><div class="rep-sub">Riepilogo adempimenti ${annoAttivo} per stampa</div></div><button class="btn-blue" onclick="stampaPDF()"><span class="material-symbols-outlined">print</span>Stampa</button></div>
+    <div class="card"><div class="card-head"><div class="card-title"><span class="material-symbols-outlined">analytics</span>Avanzamento per adempimento — ${annoAttivo}</div></div><div class="card-body"><table><thead><tr><th>Adempimento</th><th>Completati</th><th>Percentuale</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+function esportaCSV(crList){
+  const lista=crList||DB_CR;
+  const hd=['numero_cr','cognome','nome','codice_fiscale','email','stato',...ADEM.map(d=>d.key),...ADEM.map(d=>d.dk)];
+  const rows=lista.map(cr=>{const ad=DB_AD[cr.id]||{};return hd.map(h=>{const v=cr[h]??ad[h]??'';return typeof v==='boolean'?(v?'SI':'NO'):(v||'');}).join(',');});
+  dlCSV([hd.join(','),...rows].join('\n'),`cr-${annoAttivo}.csv`);
+}
+function esportaCSVSoll(){
+  const lista=DB_CR.filter(cr=>statoSemaforo(DB_AD[cr.id],cr)!=='verde');
+  const hd=['numero_cr','cognome','nome','email','stato','cosa_manca'];
+  const rows=lista.map(cr=>{const ad=DB_AD[cr.id]||{};return[cr.numero_cr,cr.cognome,cr.nome,cr.email||'',statoLabel(statoSemaforo(ad,cr)),mancantiOb(ad).map(m=>m.label).join(' | ')].join(',');});
+  dlCSV([hd.join(','),...rows].join('\n'),`da-sollecitare-${annoAttivo}.csv`);
+}
+function dlCSV(content,fname){
+  const b=new Blob([content],{type:'text/csv;charset=utf-8;'});
+  const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download=fname;a.click();
+  URL.revokeObjectURL(u);
+}
+function stampaPDF(){
+  const att=DB_CR.filter(c=>c.stato==='attivo');
+  const v=att.filter(c=>statoSemaforo(DB_AD[c.id],c)==='verde').length;
+  const ar=att.filter(c=>statoSemaforo(DB_AD[c.id],c)==='arancio').length;
+  const r=att.filter(c=>statoSemaforo(DB_AD[c.id],c)==='rosso').length;
+  const ar2=ADEM.map(d=>{const cnt=att.filter(cr=>DB_AD[cr.id]?.[d.key]).length;return`<tr><td>${d.label}</td><td>${cnt}/${att.length}</td><td>${att.length?Math.round(cnt/att.length*100):0}%</td></tr>`;}).join('');
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Report ${annoAttivo}</title><style>body{font-family:system-ui,sans-serif;padding:40px;color:#111}h1{font-size:20px;margin-bottom:4px}.meta{color:#666;font-size:12px;margin-bottom:24px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}.kpi{border:1px solid #e5e7eb;border-radius:10px;padding:16px;text-align:center}.kv{font-size:26px;font-weight:800}.kl{font-size:11px;color:#9ca3af;text-transform:uppercase;margin-top:4px}table{width:100%;border-collapse:collapse}th{background:#f9fafb;padding:8px 12px;text-align:left;font-size:11px;color:#6b7280}td{padding:8px 12px;border-bottom:1px solid #f3f4f6;font-size:13px}</style></head><body><h1>Report Adempimenti CR — ${annoAttivo}</h1><div class="meta">Generato il ${new Date().toLocaleDateString('it-IT')} · GruppoPiù CAF</div><div class="grid"><div class="kpi"><div class="kv">${att.length}</div><div class="kl">CR Attivi</div></div><div class="kpi"><div class="kv" style="color:#16a34a">${v}</div><div class="kl">In regola</div></div><div class="kpi"><div class="kv" style="color:#d97706">${ar}</div><div class="kl">In sospeso</div></div><div class="kpi"><div class="kv" style="color:#dc2626">${r}</div><div class="kl">Inadempienti</div></div></div><table><thead><tr><th>Adempimento</th><th>Completati</th><th>%</th></tr></thead><tbody>${ar2}</tbody></table><script>window.print();<\/script></body></html>`);
+  w.document.close();
 }
 
-function esportaCSV(crList) {
-  const lista = crList || DB_CR;
-  const headers = ['numero_cr','cognome','nome','codice_fiscale','email','stato',...ADEMPIMENTI_DEF.map(d=>d.key),...ADEMPIMENTI_DEF.map(d=>d.dataKey)];
-  const rows = lista.map(cr => {
-    const ad = DB_ADEMPIMENTI[cr.id] || {};
-    return headers.map(h => {
-      const v = cr[h] ?? ad[h] ?? '';
-      return typeof v === 'boolean' ? (v ? 'SI' : 'NO') : (v || '');
-    }).join(',');
-  });
-  downloadCSV([headers.join(','), ...rows].join('\n'), `cr-adempimenti-${annoAttivo}.csv`);
-}
-
-function esportaCSVSollecitare() {
-  const lista = DB_CR.filter(cr => {
-    const s = calcolaStato(DB_ADEMPIMENTI[cr.id], cr);
-    return s !== 'verde';
-  });
-  const headers = ['numero_cr','cognome','nome','email','stato_semaforo','cosa_manca'];
-  const rows = lista.map(cr => {
-    const ad = DB_ADEMPIMENTI[cr.id] || {};
-    const stato = calcolaStato(ad, cr);
-    const mancanti = mancantiObbligatori(ad).map(m=>m.label).join(' | ');
-    return [cr.numero_cr, cr.cognome, cr.nome, cr.email||'', statoLabel(stato), mancanti].join(',');
-  });
-  downloadCSV([headers.join(','), ...rows].join('\n'), `da-sollecitare-${annoAttivo}.csv`);
-}
-
-function downloadCSV(content, filename) {
-  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
-}
-
-function stampaPDF() {
-  const crAttivi = DB_CR.filter(c => c.stato === 'attivo');
-  const verdi = crAttivi.filter(c => calcolaStato(DB_ADEMPIMENTI[c.id], c) === 'verde').length;
-  const arancio = crAttivi.filter(c => calcolaStato(DB_ADEMPIMENTI[c.id], c) === 'arancio').length;
-  const rossi = crAttivi.filter(c => calcolaStato(DB_ADEMPIMENTI[c.id], c) === 'rosso').length;
-  const adeRows = ADEMPIMENTI_DEF.map(d => {
-    const count = crAttivi.filter(cr => DB_ADEMPIMENTI[cr.id]?.[d.key]).length;
-    return `<tr><td>${d.label}</td><td>${count}/${crAttivi.length}</td><td>${crAttivi.length?Math.round(count/crAttivi.length*100):0}%</td></tr>`;
-  }).join('');
-  const win = window.open('', '_blank');
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Report CR ${annoAttivo}</title>
-  <style>body{font-family:system-ui,sans-serif;padding:40px;color:#111}h1{font-size:22px;margin-bottom:4px}p{color:#666;font-size:13px;margin-bottom:24px}table{width:100%;border-collapse:collapse;margin-bottom:24px}th{background:#f1f5f9;padding:8px 12px;text-align:left;font-size:12px}td{padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:13px}.grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-bottom:24px}.kpi{border:1px solid #e2e8f0;border-radius:10px;padding:16px;text-align:center}.kpi-val{font-size:28px;font-weight:800}.kpi-lbl{font-size:11px;color:#94a3b8;text-transform:uppercase}</style></head>
-  <body>
-  <h1>Report Adempimenti CR — ${annoAttivo}</h1>
-  <p>Generato il ${new Date().toLocaleDateString('it-IT')} · GruppoPiù CAF</p>
-  <div class="grid">
-    <div class="kpi"><div class="kpi-val">${crAttivi.length}</div><div class="kpi-lbl">CR Attivi</div></div>
-    <div class="kpi"><div class="kpi-val" style="color:#10b981">${verdi}</div><div class="kpi-lbl">In regola</div></div>
-    <div class="kpi"><div class="kpi-val" style="color:#f59e0b">${arancio}</div><div class="kpi-lbl">In sospeso</div></div>
-    <div class="kpi"><div class="kpi-val" style="color:#ef4444">${rossi}</div><div class="kpi-lbl">Inadempienti</div></div>
-  </div>
-  <h2 style="font-size:15px;margin-bottom:12px">Avanzamento per adempimento</h2>
-  <table><thead><tr><th>Adempimento</th><th>CR completati</th><th>%</th></tr></thead><tbody>${adeRows}</tbody></table>
-  <script>window.print();<\/script></body></html>`);
-  win.document.close();
-}
-
-/* ============================
+/* ════════════════════════════════════════
    IMPOSTAZIONI
-============================ */
-function renderImpostazioni() {
-  const utenti_html = userProfile?.ruolo === 'admin' ? `
-  <div class="settings-section">
-    <div class="section-title"><span class="material-symbols-outlined">manage_accounts</span>Gestione utenti</div>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Gli utenti si gestiscono direttamente da <a href="${SB_URL}/project/_/auth/users" target="_blank" style="color:var(--accent)">Supabase Authentication</a>.</p>
-  </div>` : '';
-
-  document.getElementById('page-content').innerHTML = `
-    <div style="max-width:680px">
-      <div class="settings-section">
-        <div class="section-title"><span class="material-symbols-outlined">calendar_today</span>Anno attivo</div>
-        <div class="settings-row">
-          <div><div class="settings-row-label">Anno adempimenti corrente</div><div class="settings-row-sub">Cambia l'anno per consultare periodi precedenti</div></div>
-          <select class="filter-select" onchange="cambiaAnno(parseInt(this.value))" style="width:auto">
+════════════════════════════════════════ */
+function rImpost(){
+  const isAdmin=userProfile?.ruolo==='admin';
+  document.getElementById('page-content').innerHTML=`
+    <div style="max-width:620px">
+      <div class="sett-card">
+        <div class="sett-section-title"><span class="material-symbols-outlined">calendar_today</span>Anno e scadenze</div>
+        <div class="sett-row">
+          <div><div class="sett-label">Anno adempimenti attivo</div><div class="sett-sub">Cambia per consultare periodi precedenti</div></div>
+          <select class="fsel" onchange="cambiaAnno(parseInt(this.value))">
             ${[annoAttivo+1,annoAttivo,annoAttivo-1,annoAttivo-2].map(y=>`<option value="${y}" ${y===annoAttivo?'selected':''}>${y}</option>`).join('')}
           </select>
         </div>
-        <div class="settings-row">
-          <div><div class="settings-row-label">Data scadenza adempimenti</div><div class="settings-row-sub">Default: 30 aprile</div></div>
+        <div class="sett-row">
+          <div><div class="sett-label">Data scadenza adempimenti</div><div class="sett-sub">Default: 30/04</div></div>
           <div style="display:flex;gap:8px;align-items:center">
-            <input type="number" min="1" max="12" value="${scadenzaConfig.mese}" style="width:60px;padding:6px;border:1px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text)" id="scad-mese" onchange="scadenzaConfig.mese=parseInt(this.value)">
+            <input type="number" min="1" max="12" value="${scad.mese}" id="s-mese" onchange="scad.mese=parseInt(this.value)" style="width:56px;padding:6px;border:1px solid var(--border2);border-radius:8px;background:var(--canvas);color:var(--text)">
             <span style="color:var(--text3)">/</span>
-            <input type="number" min="1" max="31" value="${scadenzaConfig.giorno}" style="width:60px;padding:6px;border:1px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text)" id="scad-giorno" onchange="scadenzaConfig.giorno=parseInt(this.value)">
+            <input type="number" min="1" max="31" value="${scad.giorno}" id="s-gg" onchange="scad.giorno=parseInt(this.value)" style="width:56px;padding:6px;border:1px solid var(--border2);border-radius:8px;background:var(--canvas);color:var(--text)">
           </div>
         </div>
       </div>
-      <div class="settings-section">
-        <div class="section-title"><span class="material-symbols-outlined">palette</span>Aspetto</div>
-        <div class="settings-row">
-          <div><div class="settings-row-label">Tema scuro</div><div class="settings-row-sub">Passa a modalità notturna</div></div>
-          <div class="toggle-switch ${currentMode==='dark'?'on':''}" onclick="toggleTheme()"></div>
+      <div class="sett-card">
+        <div class="sett-section-title"><span class="material-symbols-outlined">palette</span>Aspetto</div>
+        <div class="sett-row">
+          <div><div class="sett-label">Tema scuro</div><div class="sett-sub">Modalità notturna</div></div>
+          <div class="sw ${theme==='dark'?'on':''}" onclick="toggleTheme()" style="background:${theme==='dark'?'var(--blue)':'rgba(0,0,0,.1)'}"></div>
         </div>
       </div>
-      <div class="settings-section">
-        <div class="section-title"><span class="material-symbols-outlined">backup</span>Backup dati</div>
-        <div class="settings-row">
-          <div><div class="settings-row-label">Export JSON completo</div><div class="settings-row-sub">Scarica tutti i dati CR e adempimenti</div></div>
-          <button class="btn-s" onclick="backupJSON()"><span class="material-symbols-outlined">download</span>Backup</button>
+      <div class="sett-card">
+        <div class="sett-section-title"><span class="material-symbols-outlined">backup</span>Backup</div>
+        <div class="sett-row">
+          <div><div class="sett-label">Export JSON completo</div><div class="sett-sub">Tutti i dati CR e adempimenti</div></div>
+          <button class="btn-ghost" onclick="backupJSON()"><span class="material-symbols-outlined">download</span>Backup</button>
         </div>
       </div>
-      ${utenti_html}
+      ${isAdmin?`<div class="sett-card"><div class="sett-section-title"><span class="material-symbols-outlined">manage_accounts</span>Utenti</div><div class="sett-row"><div><div class="sett-label">Gestione utenti</div><div class="sett-sub">Aggiungi, modifica ruoli e profili</div></div><a href="${SB_URL}" target="_blank"><button class="btn-ghost"><span class="material-symbols-outlined">open_in_new</span>Apri Supabase</button></a></div></div>`:''}
     </div>`;
 }
-
-async function backupJSON() {
-  const { data: allCR } = await sb.from('cr').select('*');
-  const { data: allAd } = await sb.from('adempimenti').select('*');
-  const backup = { exported_at: new Date().toISOString(), anno_attivo: annoAttivo, cr: allCR, adempimenti: allAd };
-  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = `backup-cr-${new Date().toISOString().split('T')[0]}.json`; a.click();
-  URL.revokeObjectURL(url);
-  showToast('Backup esportato ✓');
+async function backupJSON(){
+  const {data:allCR}=await sb.from('cr').select('*');
+  const {data:allAd}=await sb.from('adempimenti').select('*');
+  const bk={exported_at:new Date().toISOString(),anno:annoAttivo,cr:allCR,adempimenti:allAd};
+  const b=new Blob([JSON.stringify(bk,null,2)],{type:'application/json'});
+  const u=URL.createObjectURL(b);
+  const a=document.createElement('a');a.href=u;a.download=`backup-${new Date().toISOString().split('T')[0]}.json`;a.click();
+  URL.revokeObjectURL(u);showToast('Backup esportato ✓');
 }
 
-/* ============================
-   MODAL MANAGEMENT
-============================ */
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-function closeAllModals() { document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open')); }
-function onOverlayClick(e, id) { if (e.target === document.getElementById(id)) closeModal(id); }
+/* ════════════════════════════════════════
+   MODAL / OVERLAY
+════════════════════════════════════════ */
+function openOv(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function closeAllOv(){document.querySelectorAll('.ov.open').forEach(m=>m.classList.remove('open'));}
+function ovClick(e,id){if(e.target===document.getElementById(id))closeModal(id);}
 
-/* ============================
+/* ════════════════════════════════════════
    TOOLTIP
-============================ */
-function showTooltip(e, text) {
-  const t = document.getElementById('tooltip-box');
-  t.textContent = text;
-  t.classList.add('visible');
-  positionTooltip(e);
+════════════════════════════════════════ */
+function tipShow(e,text){
+  const t=document.getElementById('tooltip');
+  t.textContent=text;t.classList.add('show');
+  const x=Math.min(e.clientX+12,window.innerWidth-250);
+  const y=e.clientY-44;
+  t.style.left=x+'px';t.style.top=y+'px';
 }
-function positionTooltip(e) {
-  const t = document.getElementById('tooltip-box');
-  t.style.left = Math.min(e.clientX + 12, window.innerWidth - 260) + 'px';
-  t.style.top = (e.clientY - 40) + 'px';
-}
-function hideTooltip() { document.getElementById('tooltip-box').classList.remove('visible'); }
+function tipHide(){document.getElementById('tooltip').classList.remove('show');}
 
-/* ============================
+/* ════════════════════════════════════════
    TOAST
-============================ */
-function showToast(msg, tipo = 'ok') {
-  const c = document.getElementById('toast-container');
-  const t = document.createElement('div');
-  t.className = `toast ${tipo}`;
-  const icons = { ok: 'check_circle', err: 'error', info: 'info' };
-  t.innerHTML = `<span class="material-symbols-outlined">${icons[tipo]||'info'}</span>${msg}`;
+════════════════════════════════════════ */
+function showToast(msg,tipo='ok'){
+  const c=document.getElementById('toasts');
+  const t=document.createElement('div');
+  t.className=`toast ${tipo}`;
+  const ic={ok:'check_circle',err:'error',info:'info'};
+  t.innerHTML=`<span class="material-symbols-outlined">${ic[tipo]||'info'}</span>${msg}`;
   c.appendChild(t);
-  setTimeout(() => { t.style.opacity='0'; t.style.transform='translateY(8px)'; setTimeout(() => t.remove(), 300); }, 3000);
+  setTimeout(()=>{t.style.opacity='0';t.style.transform='translateY(8px)';setTimeout(()=>t.remove(),300);},3000);
 }
 
-/* ============================
-   LOG AZIONI
-============================ */
-async function logAzione(crId, azione, dettaglio) {
-  if (!currentUser) return;
-  await sb.from('log_azioni').insert({ cr_id: crId, utente: currentUser.email, azione, dettaglio });
+/* ════════════════════════════════════════
+   LOG
+════════════════════════════════════════ */
+async function logAz(crId,azione,dettaglio){
+  if(!currentUser)return;
+  await sb.from('log_azioni').insert({cr_id:crId,utente:currentUser.email,azione,dettaglio});
 }
 
-/* ============================
+/* ════════════════════════════════════════
    UTILITY
-============================ */
-function fmtDate(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+════════════════════════════════════════ */
+function fmtDate(iso){
+  if(!iso)return'';
+  return new Date(iso).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
 }
 
-/* ============================
-   MOBILE MENU
-============================ */
-function openMobileMenu() {
-  document.getElementById('sidebar').classList.add('open');
-  document.getElementById('mobile-overlay').classList.add('open');
-}
-function closeMobileMenu() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('mobile-overlay').classList.remove('open');
-}
+/* ════════════════════════════════════════
+   MOBILE
+════════════════════════════════════════ */
+function openMob(){document.getElementById('sidebar').classList.add('open');document.getElementById('mob-ov').classList.add('open');}
+function closeMob(){document.getElementById('sidebar').classList.remove('open');document.getElementById('mob-ov').classList.remove('open');}
 
-/* ============================
-   INIT CALL
-============================ */
+/* ════════════════════════════════════════
+   START
+════════════════════════════════════════ */
 init();
 </script>
 </body>
