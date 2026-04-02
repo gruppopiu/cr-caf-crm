@@ -709,14 +709,17 @@ tbody tr:hover{background:var(--surface2)}
 
 
 /* ── DASHBOARD EXT ───────── */
-.dash-priority-grid{display:grid;grid-template-columns:1.45fr .95fr;gap:14px;margin-bottom:18px}
-.dash-secondary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
-.priority-card{border:1px solid var(--blue-border);box-shadow:var(--sh)}
+.dash-priority-grid{display:grid;grid-template-columns:1.45fr .95fr;gap:14px;margin-bottom:18px;align-items:stretch}
+.dash-secondary-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:18px}
+.priority-card{border:1px solid var(--blue-border);box-shadow:var(--sh);display:flex;flex-direction:column;height:100%;min-height:560px}
 .priority-card .card-head{background:linear-gradient(135deg,rgba(37,99,235,.12),rgba(37,99,235,.03))}
 .priority-top-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .priority-empty{padding:32px 18px}
-.chart-box-compact{height:280px}
-.chart-box-small{height:240px}
+.priority-table-wrap{flex:1;overflow:auto}
+.panorama-card{display:flex;flex-direction:column;height:100%;min-height:560px}
+.panorama-card .card-body{display:flex;flex-direction:column;justify-content:space-between;gap:14px;flex:1}
+.chart-box-compact{height:300px}
+.chart-box-small{height:250px}
 .chart-box-compact canvas,.chart-box-small canvas{width:100% !important;height:100% !important}
 .inline-select{padding:6px 10px;border:1px solid var(--border2);border-radius:8px;background:var(--surface);color:var(--text);font-size:12px;font-weight:600;outline:none}
 .stat-list{display:flex;flex-direction:column;gap:10px}
@@ -731,6 +734,8 @@ tbody tr:hover{background:var(--surface2)}
 .filter-chips{display:flex;flex-wrap:wrap;gap:8px}
 .filter-chip{display:flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid var(--border2);border-radius:999px;background:var(--surface);font-size:12px;font-weight:600;color:var(--text2);cursor:pointer}
 .filter-chip input{accent-color:var(--blue);cursor:pointer}
+.filter-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.filter-summary{font-size:12px;color:var(--text2)}
 .profile-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .profile-help{font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6}
 @media(max-width:1100px){
@@ -1027,7 +1032,8 @@ let editingCrId = null, revocaCrId = null, eliminaCrId = null;
 let filtroStato = 'tutti', filtroSearch = '';
 let selectedCrs = new Set();
 let filtroAdempMancanti = [];
-let dashVizMode = 'doughnut';
+let filtroAdempMode = 'all';
+let dashVizMode = 'bar';
 let dashCharts = [];
 
 /* ════════════════════════════════════════
@@ -1210,6 +1216,7 @@ function go(page) {
   const titles={dashboard:'Dashboard',elenco:'Elenco CR',importa:'Importa / Aggiungi',report:'Report & Export',impostazioni:'Impostazioni'};
   document.getElementById('tb-title').textContent=titles[page]||page;
   document.getElementById('search-field').style.display=(page==='elenco')?'flex':'none';
+  if(page==='elenco'){ const si=document.getElementById('search-inp'); if(si) si.value=filtroSearch; }
   if(page!=='dashboard'){ destroyDashCharts(); }
   renderPage();
   closeMob();
@@ -1329,33 +1336,35 @@ function rDash() {
             <div class="table-title"><span class="material-symbols-outlined">warning</span>CR da sollecitare</div>
             <div class="table-note">${daSollecitare.length} CR richiedono attenzione immediata</div>
           </div>
-          <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+          <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <span class="badge b-red">${rossi} critici</span>
             <span class="badge b-orange">${aran} in sospeso</span>
             <button class="btn-ghost" style="font-size:12px" onclick="go('elenco')"><span class="material-symbols-outlined">arrow_forward</span>Apri elenco</button>
           </div>
         </div>
         ${sollRows ? `
-          <table class="priority-table">
-            <thead><tr><th>Nome CR</th><th>Stato</th><th>Cosa manca</th><th></th></tr></thead>
-            <tbody>${sollRows}</tbody>
-          </table>` :
+          <div class="priority-table-wrap">
+            <table class="priority-table">
+              <thead><tr><th>Nome CR</th><th>Stato</th><th>Cosa manca</th><th></th></tr></thead>
+              <tbody>${sollRows}</tbody>
+            </table>
+          </div>` :
           `<div class="empty priority-empty"><span class="material-symbols-outlined">check_circle</span><p>Tutti i CR attivi sono in regola.</p></div>`
         }
       </div>
 
-      <div class="card">
+      <div class="card panorama-card">
         <div class="card-head">
-          <div class="card-title"><span class="material-symbols-outlined">donut_large</span>Panoramica</div>
+          <div class="card-title"><span class="material-symbols-outlined">bar_chart</span>Panoramica</div>
           <select class="inline-select" onchange="changeDashViz(this.value)">
+            <option value="bar" ${dashVizMode==='bar'?'selected':''}>Barre</option>
             <option value="doughnut" ${dashVizMode==='doughnut'?'selected':''}>Ciambella</option>
             <option value="polarArea" ${dashVizMode==='polarArea'?'selected':''}>Area polare</option>
-            <option value="bar" ${dashVizMode==='bar'?'selected':''}>Barre</option>
           </select>
         </div>
         <div class="card-body">
           <div class="chart-box-compact"><canvas id="chart-overview"></canvas></div>
-          <div class="stat-list" style="margin-top:14px">
+          <div class="stat-list">
             <div class="stat-item">
               <div class="stat-left"><span class="stat-dot" style="background:#22c55e"></span>In regola</div>
               <div style="font-weight:800;color:var(--text)">${verdi}</div>
@@ -1374,16 +1383,6 @@ function rDash() {
     </div>
 
     <div class="dash-secondary-grid">
-      <div class="card">
-        <div class="card-head">
-          <div class="card-title"><span class="material-symbols-outlined">bar_chart</span>Avanzamento adempimenti ${annoAttivo}</div>
-          <div style="font-size:11px;color:var(--text3)">${att.length} CR attivi</div>
-        </div>
-        <div class="card-body">
-          <div class="chart-box-small"><canvas id="chart-dash-status"></canvas></div>
-        </div>
-      </div>
-
       <div class="card">
         <div class="card-head">
           <div class="card-title"><span class="material-symbols-outlined">analytics</span>Avanzamento per adempimento — ${annoAttivo}</div>
@@ -1411,78 +1410,85 @@ function rDash() {
         data: {
           labels,
           datasets: [{
+            label: 'CR',
             data: values,
             backgroundColor: colors,
-            borderColor: dashVizMode==='bar' ? colors : (isDk ? '#161b27' : '#ffffff'),
-            borderWidth: dashVizMode==='bar' ? 1 : 3,
-            borderRadius: dashVizMode==='bar' ? 10 : 0
+            borderColor: colors,
+            borderWidth: dashVizMode==='bar' ? 0 : 2,
+            borderRadius: dashVizMode==='bar' ? 10 : 0,
+            maxBarThickness: 42
           }]
         },
         options: {
           responsive:true,
           maintainAspectRatio:false,
           plugins:{
-            legend:{display:dashVizMode!=='bar', position:'bottom', labels:{color:textC, boxWidth:10, usePointStyle:true}},
-            tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw}`}}
-          },
-          scales: dashVizMode==='bar' ? {
-            x:{grid:{display:false},ticks:{color:textC,font:{size:11}}},
-            y:{grid:{color:gridC},ticks:{color:textC,precision:0,font:{size:11}},beginAtZero:true}
-          } : {}
-        }
-      };
-      dashCharts.push(new Chart(overviewCtx, { type: dashVizMode, ...common }));
-    }
-
-    const statusCtx = document.getElementById('chart-dash-status');
-    if(statusCtx){
-      const chartData = ADEM.map(d=>{
-        const cnt = att.filter(cr=>DB_AD[cr.id] && DB_AD[cr.id][d.key]).length;
-        return {label:d.label, cnt, pct:att.length ? Math.round(cnt/att.length*100) : 0};
-      });
-      dashCharts.push(new Chart(statusCtx,{
-        type:'bar',
-        data:{
-          labels:chartData.map(d=>d.label),
-          datasets:[{
-            data:chartData.map(d=>d.cnt),
-            backgroundColor:chartData.map(d=>d.pct>=80?'#22c55e':d.pct>=40?'#f59e0b':'#ef4444'),
-            borderColor:chartData.map(d=>d.pct>=80?'#16a34a':d.pct>=40?'#d97706':'#dc2626'),
-            borderWidth:1.5,
-            borderRadius:8,
-            borderSkipped:false
-          }]
-        },
-        options:{
-          responsive:true,
-          maintainAspectRatio:false,
-          indexAxis:'y',
-          plugins:{
-            legend:{display:false},
-            tooltip:{callbacks:{label:c=>`${c.raw} CR — ${chartData[c.dataIndex].pct}%`}}
-          },
-          scales:{
-            x:{max:att.length||1,grid:{color:gridC},ticks:{color:textC,precision:0,font:{size:11}}},
-            y:{grid:{display:false},ticks:{color:textC,font:{size:11}}}
+            legend:{display:dashVizMode!=='bar', labels:{color:textC}},
+            tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw} CR`}}
           }
         }
-      }));
+      };
+
+      let chart;
+      if(dashVizMode==='bar'){
+        chart = new Chart(overviewCtx,{
+          type:'bar',
+          ...common,
+          options:{
+            ...common.options,
+            plugins:{
+              ...common.options.plugins,
+              legend:{display:false}
+            },
+            scales:{
+              x:{grid:{display:false},ticks:{color:textC,font:{size:11}}},
+              y:{beginAtZero:true,grid:{color:gridC},ticks:{color:textC,precision:0,font:{size:11}}}
+            }
+          }
+        });
+      } else if(dashVizMode==='polarArea'){
+        chart = new Chart(overviewCtx,{
+          type:'polarArea',
+          ...common,
+          options:{
+            ...common.options,
+            scales:{ r:{grid:{color:gridC},ticks:{display:false}, pointLabels:{color:textC}} }
+          }
+        });
+      } else {
+        chart = new Chart(overviewCtx,{
+          type:'doughnut',
+          ...common,
+          options:{
+            ...common.options,
+            cutout:'68%'
+          }
+        });
+      }
+      dashCharts.push(chart);
     }
-  }, 30);
+  },50);
 }
 
-/* ════════════════════════════════════════
-   ELENCO CR
-════════════════════════════════════════ */
 function rElenco() {
+  const query = (filtroSearch || '').trim().toLowerCase();
   const lista = DB_CR.filter(cr=>{
     const ad = DB_AD[cr.id];
-    const matchS = !filtroSearch || [cr.nome,cr.cognome,cr.codice_fiscale,cr.numero_cr,cr.email].some(v=>v&&v.toLowerCase().includes(filtroSearch.toLowerCase()));
+    const matchS = !query || [cr.nome,cr.cognome,cr.codice_fiscale,cr.numero_cr,cr.email].some(v=>v&&v.toLowerCase().includes(query));
     const s = statoSemaforo(ad,cr);
     const matchF = filtroStato==='tutti' || s===filtroStato;
-    const matchAdemp = filtroAdempMancanti.length===0 || filtroAdempMancanti.every(key => !ad || !ad[key]);
+    const matchAdemp = filtroAdempMancanti.length===0 || (
+      filtroAdempMode==='all'
+        ? filtroAdempMancanti.every(key => !ad || !ad[key])
+        : filtroAdempMancanti.some(key => !ad || !ad[key])
+    );
     return matchS && matchF && matchAdemp;
   });
+
+  const activeFilterLabels = filtroAdempMancanti
+    .map(key => ADEM.find(d=>d.key===key)?.label)
+    .filter(Boolean)
+    .join(' · ');
 
   const rows = lista.map(cr=>{
     const ad=DB_AD[cr.id];
@@ -1515,8 +1521,12 @@ function rElenco() {
   document.getElementById('page-content').innerHTML=`
     <div class="table-wrap">
       <div class="table-toolbar">
-        <div class="table-title"><span class="material-symbols-outlined">group</span>CR — ${annoAttivo}</div>
+        <div class="table-title"><span class="material-symbols-outlined">group</span>Elenco CR CAF — ${annoAttivo}</div>
         <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div class="search-field" style="display:flex;width:280px">
+            <span class="material-symbols-outlined">search</span>
+            <input type="text" placeholder="Cerca per nome, numero CR, CF o email..." value="${escapeHtmlAttr(filtroSearch)}" oninput="setFiltroSearch(this.value)">
+          </div>
           <select class="fsel" onchange="filtroStato=this.value;rElenco()">
             <option value="tutti" ${filtroStato==='tutti'?'selected':''}>Tutti gli stati</option>
             <option value="verde" ${filtroStato==='verde'?'selected':''}>In regola</option>
@@ -1527,9 +1537,16 @@ function rElenco() {
             ${[annoAttivo+1,annoAttivo,annoAttivo-1,annoAttivo-2].map(y=>`<option value="${y}" ${y===annoAttivo?'selected':''}>${y}</option>`).join('')}
           </select>
           <button class="btn-ghost" onclick="esportaCSV()"><span class="material-symbols-outlined">download</span>CSV</button>
+          ${userProfile?.ruolo==='admin'?`<button class="btn-ghost btn-danger" onclick="bulkDeleteSelected()" ${selectedCrs.size===0?'disabled style="opacity:.45;cursor:not-allowed"':''}><span class="material-symbols-outlined">delete</span>Elimina selezionati</button>`:''}
         </div>
         <div class="filter-panel">
-          <div class="filter-title">Visualizzazioni personalizzate · adempimenti mancanti</div>
+          <div class="filter-row">
+            <div class="filter-title" style="margin-right:auto">Visualizzazioni personalizzate · adempimenti mancanti</div>
+            <select class="fsel" onchange="filtroAdempMode=this.value;rElenco()">
+              <option value="all" ${filtroAdempMode==='all'?'selected':''}>Mancano tutti i filtri selezionati</option>
+              <option value="any" ${filtroAdempMode==='any'?'selected':''}>Manca almeno uno dei filtri selezionati</option>
+            </select>
+          </div>
           <div class="filter-chips">
             ${ADEM_OB.map(def=>`
               <label class="filter-chip">
@@ -1538,8 +1555,8 @@ function rElenco() {
               </label>
             `).join('')}
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
-            <div class="table-note">Puoi combinare più filtri insieme. Esempio: Appendice A + Polizza.</div>
+          <div class="filter-row">
+            <div class="filter-summary">${filtroAdempMancanti.length ? `Filtri attivi: ${activeFilterLabels}. Modalità: ${filtroAdempMode==='all'?'mancano tutti':'manca almeno uno'}.` : 'Seleziona uno o più adempimenti per vedere solo i CR a cui mancano.'}</div>
             <button class="btn-ghost" style="font-size:12px" onclick="clearAdempFilters()"><span class="material-symbols-outlined">filter_alt_off</span>Reset filtri</button>
           </div>
         </div>
@@ -1561,16 +1578,22 @@ function rElenco() {
     </div>`;
 }
 
-function onSearch(){filtroSearch=document.getElementById('search-inp').value;if(currentPage==='elenco')rElenco();}
+function setFiltroSearch(value){
+  filtroSearch = value;
+  const top = document.getElementById('search-inp');
+  if(top && top.value !== value) top.value = value;
+  if(currentPage==='elenco') rElenco();
+}
+function onSearch(){setFiltroSearch(document.getElementById('search-inp').value);}
 function toggleSel(id,v){if(v)selectedCrs.add(id);else selectedCrs.delete(id);const b=document.getElementById('bulk-bar');if(b)b.classList.toggle('show',selectedCrs.size>0);const bc=document.querySelector('.bulk-n');if(bc)bc.textContent=`${selectedCrs.size} selezionati`;}
-function selAll(v){DB_CR.forEach(c=>{if(v)selectedCrs.add(c.id);else selectedCrs.delete(c.id);});rElenco();}
+function selAll(v){DB_CR.filter(cr=>{const ad=DB_AD[cr.id]; const s=statoSemaforo(ad,cr); const q=(filtroSearch||'').trim().toLowerCase(); const matchS=!q||[cr.nome,cr.cognome,cr.codice_fiscale,cr.numero_cr,cr.email].some(val=>val&&val.toLowerCase().includes(q)); const matchF=filtroStato==='tutti'||s===filtroStato; const matchAd=filtroAdempMancanti.length===0||(filtroAdempMode==='all'?filtroAdempMancanti.every(key=>!ad||!ad[key]):filtroAdempMancanti.some(key=>!ad||!ad[key])); return matchS&&matchF&&matchAd; }).forEach(c=>{if(v)selectedCrs.add(c.id);else selectedCrs.delete(c.id);});rElenco();}
 function deselAll(){selectedCrs.clear();rElenco();}
 function toggleFiltroAdemp(key, checked){
   if(checked && !filtroAdempMancanti.includes(key)) filtroAdempMancanti.push(key);
   if(!checked) filtroAdempMancanti = filtroAdempMancanti.filter(k=>k!==key);
   rElenco();
 }
-function clearAdempFilters(){ filtroAdempMancanti = []; rElenco(); }
+function clearAdempFilters(){ filtroAdempMancanti = []; filtroAdempMode='all'; rElenco(); }
 async function bulkDeleteSelected(){
   if(userProfile?.ruolo!=='admin' || !selectedCrs.size) return;
   const ok = window.confirm(`Eliminare definitivamente ${selectedCrs.size} CR selezionati? L'operazione è irreversibile.`);
@@ -1585,14 +1608,12 @@ async function bulkDeleteSelected(){
 async function bulkAdem(){
   if(!selectedCrs.size)return;
   const adem=ADEM.map(d=>d.key);
-  const scelta=adem[0];
   const key=window.prompt(`Chiave adempimento:\n${adem.join('\n')}`);
   if(!key||!ADEM.find(d=>d.key===key)){showToast('Chiave non valida','err');return;}
   for(const id of selectedCrs){await sb.from('adempimenti').upsert({cr_id:id,anno:annoAttivo,[key]:true},{onConflict:'cr_id,anno'});}
   showToast(`"${key}" impostato su ${selectedCrs.size} CR`);
   await loadAD();rElenco();
 }
-async function cambiaAnno(a){annoAttivo=a;document.getElementById('tb-anno').textContent=a;await loadAD();renderPage();}
 
 /* ════════════════════════════════════════
    SCHEDA CR
@@ -2101,6 +2122,14 @@ async function logAz(crId,azione,dettaglio){
 /* ════════════════════════════════════════
    UTILITY
 ════════════════════════════════════════ */
+function escapeHtmlAttr(value=''){
+  return String(value)
+    .replace(/&/g,'&amp;')
+    .replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+}
+
 function fmtDate(iso){
   if(!iso)return'';
   return new Date(iso).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
